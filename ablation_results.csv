@@ -1,0 +1,7 @@
+k,QFS_features,QFS_clean,QFS_noisy,QFS_corr,MI_features,MI_clean,MI_noisy,MI_corr
+1,Std_ExG,1.0000,0.4823,0.0000,Std_ExG,1.0000,0.4823,0.0000
+2,"Std_ExG,Mean_RBR",1.0000,0.5655,0.7447,"Std_ExG,Mean_ExG",1.0000,0.4868,0.9693
+3,"Std_ExG,Mean_RBR,Mean_B",1.0000,0.5578,0.7764,"Std_ExG,Mean_ExG,Mean_RBR",1.0000,0.5094,0.8240
+4,"Std_ExG,Mean_RBR,Mean_B,Correlation",1.0000,0.5797,0.5961,"Std_ExG,Mean_ExG,Mean_RBR,Mean_B",1.0000,0.5320,0.7982
+5,"Std_ExG,Mean_RBR,Mean_B,Correlation,Mean_ExG",1.0000,0.5603,0.6546,"Std_ExG,Mean_ExG,Mean_RBR,Mean_B,Correlation",1.0000,0.5707,0.6546
+6,"Std_ExG,Mean_RBR,Mean_B,Correlation,Mean_ExG,Mean_NGRDI",1.0000,0.4880,0.5046,"Std_ExG,Mean_ExG,Mean_RBR,Mean_B,Correlation,Mean_NGRDI",1.0000,0.4829,0.5046
