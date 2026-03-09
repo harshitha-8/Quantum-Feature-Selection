@@ -1,0 +1,19 @@
+TestFolder,Method,Accuracy,F1
+205_post_def_rgb,QFS-4 (Quantum),1.0000,1.0000
+205_post_def_rgb,MI-4 (Classical),1.0000,1.0000
+205_post_def_rgb,All-12,1.0000,1.0000
+part 2_pre_def_rgb,QFS-4 (Quantum),1.0000,1.0000
+part 2_pre_def_rgb,MI-4 (Classical),1.0000,1.0000
+part 2_pre_def_rgb,All-12,1.0000,1.0000
+part3_post_def_rgb,QFS-4 (Quantum),1.0000,1.0000
+part3_post_def_rgb,MI-4 (Classical),1.0000,1.0000
+part3_post_def_rgb,All-12,1.0000,1.0000
+part4_post_def_rgb,QFS-4 (Quantum),1.0000,1.0000
+part4_post_def_rgb,MI-4 (Classical),1.0000,1.0000
+part4_post_def_rgb,All-12,1.0000,1.0000
+part_one_pre_def_rgb,QFS-4 (Quantum),1.0000,1.0000
+part_one_pre_def_rgb,MI-4 (Classical),1.0000,1.0000
+part_one_pre_def_rgb,All-12,1.0000,1.0000
+post_def_rgb_part1,QFS-4 (Quantum),1.0000,1.0000
+post_def_rgb_part1,MI-4 (Classical),1.0000,1.0000
+post_def_rgb_part1,All-12,1.0000,1.0000
