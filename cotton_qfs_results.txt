@@ -1,0 +1,40 @@
+=== Cotton Defoliation - Quantum Feature Selection Results ===
+Dataset: /Volumes/T9/ICML (Real UAV imagery)
+Total Images: 1549 (Post_Defoliation: 869, Pre_Defoliation: 680)
+
+--- Pre-Filter (Mutual Information) ---
+Top 6 candidate features:
+  1. Mean_ExG    (Excess Green Index)
+  2. Std_ExG     (Variation in ExG)
+  3. Mean_RBR    (Red-Blue Ratio)
+  4. Mean_NGRDI  (Normalized Green-Red Difference)
+  5. Mean_B      (Mean Blue Channel)
+  6. Correlation (GLCM Texture Correlation)
+
+--- Quantum Feature Selection Results (VQC Wrapper, n=4) ---
+All subsets evaluated:
+  [Mean_ExG, Std_ExG, Mean_RBR, Mean_NGRDI] -> 0.6800
+  [Mean_ExG, Std_ExG, Mean_RBR, Mean_B]     -> 0.4600
+  [Mean_ExG, Std_ExG, Mean_RBR, Correlation] -> 0.5600
+  [Mean_ExG, Std_ExG, Mean_NGRDI, Mean_B]   -> 0.5400
+  [Mean_ExG, Std_ExG, Mean_NGRDI, Correlation] -> 0.4800
+  [Mean_ExG, Std_ExG, Mean_B, Correlation]  -> 0.3400
+  [Mean_ExG, Mean_RBR, Mean_NGRDI, Mean_B]  -> 0.4800
+  [Mean_ExG, Mean_RBR, Mean_NGRDI, Correlation] -> 0.4800
+  [Mean_ExG, Mean_RBR, Mean_B, Correlation] -> 0.6600
+  [Mean_ExG, Mean_NGRDI, Mean_B, Correlation] -> 0.5200
+  [Std_ExG, Mean_RBR, Mean_NGRDI, Mean_B]   -> 0.4400
+  [Std_ExG, Mean_RBR, Mean_NGRDI, Correlation] -> 0.5600
+  [Std_ExG, Mean_RBR, Mean_B, Correlation]  -> 0.7200  *** BEST ***
+  [Std_ExG, Mean_NGRDI, Mean_B, Correlation] -> 0.5200
+  [Mean_RBR, Mean_NGRDI, Mean_B, Correlation] -> 0.3000
+
+--- CONCLUSION ---
+Best Quantum-Selected Feature Subset: [Std_ExG, Mean_RBR, Mean_B, Correlation]
+Best Accuracy (VQC, Mac M4 simulation): 72%
+
+Interpretation:
+  - Std_ExG: Variability in green signal (cotton bolls disrupt green uniformity)
+  - Mean_RBR: Red-Blue ratio (dry plant material vs green leaves)
+  - Mean_B: Blue channel (soil/sky background contrast)
+  - Correlation: GLCM texture smoothness (fluffy bolls vs textured leaves)
