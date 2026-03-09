@@ -1,0 +1,4 @@
+Method,Acc_Mean,Acc_Std,F1_Mean,F1_Std,Prec_Mean,Rec_Mean,Features,Time_s
+Quantum-Selected (4 feat),1.0000,0.0000,1.0000,0.0000,1.0000,1.0000,Std_ExG;Mean_RBR;Mean_B;Correlation,0.0
+MI-Selected (4 feat),1.0000,0.0000,1.0000,0.0000,1.0000,1.0000,Std_ExG;Mean_ExG;Mean_RBR;Mean_B,0.0
+All Features (12 feat),1.0000,0.0000,1.0000,0.0000,1.0000,1.0000,,0.0
