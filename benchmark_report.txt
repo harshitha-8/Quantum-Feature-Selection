@@ -1,0 +1,31 @@
+============================================================
+  COTTON DEFOLIATION CLASSIFICATION BENCHMARK
+  Dataset: 1549 images, 12 features
+  Classes: Post_Def=869, Pre_Def=680
+  Classifier: SVM-RBF (C=10, gamma=scale)
+  Evaluation: 5-fold Stratified Cross-Validation
+============================================================
+
+Method: Quantum-Selected (4 feat)
+  Accuracy:  1.0000 ± 0.0000
+  F1 Score:  1.0000 ± 0.0000
+  Precision: 1.0000 ± 0.0000
+  Recall:    1.0000 ± 0.0000
+
+Method: MI-Selected (4 feat)
+  Accuracy:  1.0000 ± 0.0000
+  F1 Score:  1.0000 ± 0.0000
+  Precision: 1.0000 ± 0.0000
+  Recall:    1.0000 ± 0.0000
+  Features:  ['Std_ExG', 'Mean_ExG', 'Mean_RBR', 'Mean_B']
+
+Method: All Features (12 feat)
+  Accuracy:  1.0000 ± 0.0000
+  F1 Score:  1.0000 ± 0.0000
+  Precision: 1.0000 ± 0.0000
+  Recall:    1.0000 ± 0.0000
+
+KEY FINDING:
+  Quantum-selected subset (4 features) achieves 100.0% accuracy.
+  vs MI-selected (same k=4): +0.0% difference
+  vs All-features (12):      +0.0% difference
