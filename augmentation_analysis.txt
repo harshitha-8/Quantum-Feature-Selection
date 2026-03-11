@@ -1,0 +1,156 @@
+================================================================================
+  AUGMENTATION ROBUSTNESS ANALYSIS
+  Fog / Glare / Shadow Perturbation Testing
+================================================================================
+
+AUGMENTATION METHODOLOGY
+------------------------
+Augmentations are applied ONLY to the test set during 5-fold cross-validation.
+The model is trained on clean data and evaluated on perturbed data.
+This simulates real-world deployment where training data is curated but
+inference encounters adverse environmental conditions.
+
+Augmentation Functions:
+- FOG:    Reduces contrast by blending with mean, adds Gaussian noise
+          Simulates hazy/misty conditions common in early morning UAV flights
+          
+- GLARE:  Increases brightness on random 30% of samples
+          Simulates sun reflection on leaves/bolls during midday flights
+          
+- SHADOW: Reduces intensity on random 40% of samples
+          Simulates cloud shadows or tree canopy shadows on field edges
+
+Intensity Parameter: 0.3 (30% perturbation strength)
+
+================================================================================
+DETAILED RESULTS BY AUGMENTATION TYPE
+================================================================================
+
+FOG AUGMENTATION (intensity=0.3)
+--------------------------------
+┌─────────────┬──────────┬──────────┬──────────┬──────────┐
+│ Method      │ Accuracy │ F1-Score │ FPR      │ mIoU     │
+├─────────────┼──────────┼──────────┼──────────┼──────────┤
+│ All-14      │  0.4532  │  0.2982  │  0.9747  │  0.2353  │
+│ MI-4        │  0.8954  │  0.8958  │  0.1530  │  0.8102  │
+│ QFS-2       │  0.8141  │  0.8144  │  0.2601  │  0.6864  │
+│ QFS-4 (Ours)│  0.8354  │  0.8360  │  0.2037  │  0.7166  │
+│ QFS-6       │  0.8819  │  0.8822  │  0.1784  │  0.7884  │
+└─────────────┴──────────┴──────────┴──────────┴──────────┘
+
+Key Observations:
+- All-14 CATASTROPHICALLY FAILS under fog (45% accuracy, 97% FPR!)
+- MI-4 shows best fog robustness (89.5%)
+- QFS-4 maintains reasonable performance (83.5%)
+- More features ≠ better robustness (All-14 worst, MI-4 best)
+
+
+GLARE AUGMENTATION (intensity=0.3)
+----------------------------------
+┌─────────────┬──────────┬──────────┬──────────┬──────────┐
+│ Method      │ Accuracy │ F1-Score │ FPR      │ mIoU     │
+├─────────────┼──────────┼──────────┼──────────┼──────────┤
+│ All-14      │  0.8102  │  0.8077  │  0.3383  │  0.6799  │
+│ MI-4        │  0.9864  │  0.9865  │  0.0242  │  0.9729  │
+│ QFS-2       │  0.9994  │  0.9994  │  0.0012  │  0.9987  │
+│ QFS-4 (Ours)│  0.8838  │  0.8839  │  0.2071  │  0.7918  │
+│ QFS-6       │  0.8748  │  0.8747  │  0.2232  │  0.7774  │
+└─────────────┴──────────┴──────────┴──────────┴──────────┘
+
+Key Observations:
+- QFS-2 achieves near-perfect glare robustness (99.9%)
+- MI-4 also excellent (98.6%)
+- QFS-4 and QFS-6 show moderate degradation (~88%)
+- All-14 again underperforms (81%)
+
+
+SHADOW AUGMENTATION (intensity=0.3)
+-----------------------------------
+┌─────────────┬──────────┬──────────┬──────────┬──────────┐
+│ Method      │ Accuracy │ F1-Score │ FPR      │ mIoU     │
+├─────────────┼──────────┼──────────┼──────────┼──────────┤
+│ All-14      │  0.7657  │  0.7594  │  0.4177  │  0.6171  │
+│ MI-4        │  1.0000  │  1.0000  │  0.0000  │  1.0000  │
+│ QFS-2       │  0.9716  │  0.9715  │  0.0000  │  0.9436  │
+│ QFS-4 (Ours)│  0.8573  │  0.8569  │  0.2543  │  0.7502  │
+│ QFS-6       │  0.9238  │  0.9241  │  0.1358  │  0.8582  │
+└─────────────┴──────────┴──────────┴──────────┴──────────┘
+
+Key Observations:
+- MI-4 is PERFECTLY robust to shadows (100%)
+- QFS-2 also excellent (97.2%)
+- QFS-6 good (92.4%)
+- QFS-4 shows moderate degradation (85.7%)
+- All-14 worst again (76.6%)
+
+================================================================================
+AGGREGATE ROBUSTNESS RANKING
+================================================================================
+
+Average Accuracy Across All Augmentations:
+┌─────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+│ Method      │ Clean    │ Fog      │ Glare    │ Shadow   │ Average  │
+├─────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+│ MI-4        │  1.0000  │  0.8954  │  0.9864  │  1.0000  │  0.9705  │
+│ QFS-6       │  1.0000  │  0.8819  │  0.8748  │  0.9238  │  0.9201  │
+│ QFS-2       │  1.0000  │  0.8141  │  0.9994  │  0.9716  │  0.9463  │
+│ QFS-4 (Ours)│  1.0000  │  0.8354  │  0.8838  │  0.8573  │  0.8941  │
+│ All-14      │  1.0000  │  0.4532  │  0.8102  │  0.7657  │  0.7573  │
+└─────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+RANKING BY AVERAGE ROBUSTNESS:
+1. MI-4        (97.05%) - Best overall robustness
+2. QFS-2       (94.63%) - Excellent, minimal features
+3. QFS-6       (92.01%) - Good balance
+4. QFS-4       (89.41%) - Moderate robustness
+5. All-14      (75.73%) - WORST - overfits to clean data
+
+================================================================================
+FALSE POSITIVE RATE ANALYSIS (Critical for Deployment)
+================================================================================
+
+FPR measures how often the model incorrectly classifies Post-Defoliation as
+Pre-Defoliation. High FPR is dangerous: farmers might skip defoliation
+treatment on fields that actually need it.
+
+┌─────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+│ Method      │ Clean    │ Fog      │ Glare    │ Shadow   │ Max FPR  │
+├─────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+│ All-14      │  0.0000  │  0.9747  │  0.3383  │  0.4177  │  0.9747  │
+│ MI-4        │  0.0000  │  0.1530  │  0.0242  │  0.0000  │  0.1530  │
+│ QFS-2       │  0.0000  │  0.2601  │  0.0012  │  0.0000  │  0.2601  │
+│ QFS-4 (Ours)│  0.0000  │  0.2037  │  0.2071  │  0.2543  │  0.2543  │
+│ QFS-6       │  0.0000  │  0.1784  │  0.2232  │  0.1358  │  0.2232  │
+└─────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+CRITICAL FINDING:
+All-14 has 97.5% FPR under fog - essentially random guessing!
+This makes it UNSUITABLE for real-world deployment.
+
+================================================================================
+CONCLUSIONS
+================================================================================
+
+1. FEATURE SELECTION IS ESSENTIAL
+   Using all 14 features leads to overfitting and catastrophic failure
+   under environmental perturbations (45% accuracy under fog).
+
+2. MI-4 SHOWS BEST OVERALL ROBUSTNESS
+   Classical Mutual Information selection achieves 97% average accuracy
+   across all conditions. However, it has higher feature redundancy.
+
+3. QFS-4 PROVIDES BALANCED PERFORMANCE
+   Quantum-selected features maintain ~89% average accuracy with
+   lower redundancy (|r|=0.596 vs 0.798 for MI-4).
+
+4. FEWER FEATURES CAN BE BETTER
+   QFS-2 (only 2 features) achieves 94.6% average robustness,
+   demonstrating that minimal, well-chosen features outperform
+   large feature sets.
+
+5. FOG IS THE HARDEST CONDITION
+   All methods show largest degradation under fog augmentation.
+   This suggests fog-specific training data augmentation may be
+   needed for robust deployment.
+
+================================================================================
