@@ -1,0 +1,89 @@
+============================================================
+  CONFUSION MATRICES - 5-FOLD CROSS VALIDATION
+============================================================
+
+Method: All-14 (12 features)
+----------------------------------------
+                 Predicted
+              Post-Def  Pre-Def
+Actual Post-Def    869        0
+       Pre-Def       0      680
+
+Metrics:
+  Accuracy:  1.0000 ± 0.0000
+  F1 Score:  1.0000 ± 0.0000
+  Precision: 1.0000
+  Recall:    1.0000
+  FPR:       0.0000
+  mIoU:      1.0000
+  AUC:       1.0000
+  Features:  ['Mean_ExG', 'Std_ExG', 'Mean_RBR', 'Mean_NGRDI', 'Mean_R', 'Mean_G', 'Mean_B', 'Entropy', 'Contrast', 'Homogeneity', 'Energy', 'Correlation']
+
+Method: MI-4 (4 features)
+----------------------------------------
+                 Predicted
+              Post-Def  Pre-Def
+Actual Post-Def    869        0
+       Pre-Def       0      680
+
+Metrics:
+  Accuracy:  1.0000 ± 0.0000
+  F1 Score:  1.0000 ± 0.0000
+  Precision: 1.0000
+  Recall:    1.0000
+  FPR:       0.0000
+  mIoU:      1.0000
+  AUC:       1.0000
+  Features:  ['Std_ExG', 'Mean_ExG', 'Mean_RBR', 'Mean_B']
+
+Method: QFS-2 (2 features)
+----------------------------------------
+                 Predicted
+              Post-Def  Pre-Def
+Actual Post-Def    869        0
+       Pre-Def       0      680
+
+Metrics:
+  Accuracy:  1.0000 ± 0.0000
+  F1 Score:  1.0000 ± 0.0000
+  Precision: 1.0000
+  Recall:    1.0000
+  FPR:       0.0000
+  mIoU:      1.0000
+  AUC:       1.0000
+  Features:  ['Std_ExG', 'Mean_RBR']
+
+Method: QFS-4 (4 features)
+----------------------------------------
+                 Predicted
+              Post-Def  Pre-Def
+Actual Post-Def    869        0
+       Pre-Def       0      680
+
+Metrics:
+  Accuracy:  1.0000 ± 0.0000
+  F1 Score:  1.0000 ± 0.0000
+  Precision: 1.0000
+  Recall:    1.0000
+  FPR:       0.0000
+  mIoU:      1.0000
+  AUC:       1.0000
+  Features:  ['Std_ExG', 'Mean_RBR', 'Mean_B', 'Correlation']
+
+Method: QFS-6 (6 features)
+----------------------------------------
+                 Predicted
+              Post-Def  Pre-Def
+Actual Post-Def    869        0
+       Pre-Def       0      680
+
+Metrics:
+  Accuracy:  1.0000 ± 0.0000
+  F1 Score:  1.0000 ± 0.0000
+  Precision: 1.0000
+  Recall:    1.0000
+  FPR:       0.0000
+  mIoU:      1.0000
+  AUC:       1.0000
+  Features:  ['Std_ExG', 'Mean_RBR', 'Mean_B', 'Correlation', 'Mean_ExG', 'Mean_NGRDI']
+

@@ -1,0 +1,6 @@
+Method,N_Features,Accuracy,Acc_Std,F1,F1_Std,Precision,Recall,FPR,mIoU,AUC,TP,TN,FP,FN,Features
+All-14,12,1.0000,0.0000,1.0000,0.0000,1.0000,1.0000,0.0000,1.0000,1.0000,680,869,0,0,Mean_ExG; Std_ExG; Mean_RBR; Mean_NGRDI; Mean_R; Mean_G; Mean_B; Entropy; Contrast; Homogeneity; Energy; Correlation
+MI-4,4,1.0000,0.0000,1.0000,0.0000,1.0000,1.0000,0.0000,1.0000,1.0000,680,869,0,0,Std_ExG; Mean_ExG; Mean_RBR; Mean_B
+QFS-2,2,1.0000,0.0000,1.0000,0.0000,1.0000,1.0000,0.0000,1.0000,1.0000,680,869,0,0,Std_ExG; Mean_RBR
+QFS-4,4,1.0000,0.0000,1.0000,0.0000,1.0000,1.0000,0.0000,1.0000,1.0000,680,869,0,0,Std_ExG; Mean_RBR; Mean_B; Correlation
+QFS-6,6,1.0000,0.0000,1.0000,0.0000,1.0000,1.0000,0.0000,1.0000,1.0000,680,869,0,0,Std_ExG; Mean_RBR; Mean_B; Correlation; Mean_ExG; Mean_NGRDI
