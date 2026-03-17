@@ -295,7 +295,10 @@ def plot2_noise(res):
                  "(Orange = Non-Trivial; Blue = QFS; Green = MI)",
                  fontweight="bold")
     ax.set_ylim(40, 103)
-    ax.legend(ncol=3, frameon=True, loc="lower left")
+    
+    # Legend moved outside the plot
+    ax.legend(bbox_to_anchor=(1.02, 1), loc="upper left", borderaxespad=0, frameon=True)
+    
     ax.grid(axis="y", ls="--", alpha=0.4); SPINE_OFF(ax)
     plt.tight_layout()
     path = os.path.join(PLOTS_DIR, "honest_02_noise_curve.png")
