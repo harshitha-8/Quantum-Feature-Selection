@@ -334,7 +334,6 @@ def plot_augmentation_k4():
 def plot_cv_metrics_k4():
     cv    = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
     SIGMA = 0.12          # noise level that produces meaningful variation
-    fold_data_clean = []
     fold_data_noise = []
 
     for fold_i, (cv_tr, cv_te) in enumerate(cv.split(X_tr, y_tr)):
@@ -344,60 +343,42 @@ def plot_cv_metrics_k4():
         Xte_noisy = Xte_clean + np.random.RandomState(fold_i).normal(
                         0, SIGMA, Xte_clean.shape)
 
-        label = f"Fold {fold_i+1}"
-        for tag, Xte, store in [("clean", Xte_clean, fold_data_clean),
-                                 ("noisy", Xte_noisy, fold_data_noise)]:
-            pr = c.predict_proba(Xte)[:, 1]
-            p  = c.predict(Xte)
-            store.append({
-                "Fold":      label,
-                "Accuracy":  accuracy_score(y_tr[cv_te], p)           * 100,
-                "F1":        f1_score(y_tr[cv_te], p, zero_division=0)* 100,
-                "Precision": precision_score(y_tr[cv_te], p, zero_division=0)*100,
-                "Recall":    recall_score(y_tr[cv_te], p, zero_division=0)   *100,
-                "AUC":       roc_auc_score(y_tr[cv_te], pr)           * 100,
-            })
+        pr = c.predict_proba(Xte_noisy)[:, 1]
+        p  = c.predict(Xte_noisy)
+        fold_data_noise.append({
+            "Fold":      f"Fold {fold_i+1}",
+            "Accuracy":  accuracy_score(y_tr[cv_te], p)           * 100,
+            "F1":        f1_score(y_tr[cv_te], p, zero_division=0)* 100,
+            "Precision": precision_score(y_tr[cv_te], p, zero_division=0)*100,
+            "Recall":    recall_score(y_tr[cv_te], p, zero_division=0)   *100,
+            "AUC":       roc_auc_score(y_tr[cv_te], pr)           * 100,
+        })
 
-    fdf_n = pd.DataFrame(fold_data_noise)
-    fdf_c = pd.DataFrame(fold_data_clean)
+    fdf_n   = pd.DataFrame(fold_data_noise)
     metrics = ["Accuracy", "F1", "Precision", "Recall", "AUC"]
     MCOLS   = ["#1565C0", "#2E7D32", "#C62828", "#F57F17", "#6A1B9A"]
 
-    fig, axes = plt.subplots(1, 2, figsize=(15, 5.5), facecolor="white",
-                              sharey=False)
+    fig, ax = plt.subplots(figsize=(10, 5.5), facecolor="white")
 
-    # ── Left: noise-stressed (honest variation) ────────────────────────────
-    ax = axes[0]
-    x  = np.arange(len(fdf_n))
-    w  = 0.15
+    x = np.arange(len(fdf_n))
+    w = 0.15
     for i, (m, col) in enumerate(zip(metrics, MCOLS)):
         ax.bar(x + (i-2)*w, fdf_n[m], w, label=m,
                color=col, edgecolor="black", lw=0.7, alpha=0.88)
     for m, col in zip(metrics, MCOLS):
         ax.axhline(fdf_n[m].mean(), color=col, lw=1.5, ls=":", alpha=0.7)
+        
     ax.set_xticks(x); ax.set_xticklabels(fdf_n["Fold"], fontsize=11)
-    ax.set_ylabel("Score (%)"); ax.set_ylim(55, 105)
-    ax.set_title(f"Noise-Stressed CV (σ={SIGMA})\n"
-                 "Shows real fold-to-fold variation", fontweight="bold")
-    ax.legend(loc="lower right", fontsize=8.5)
+    ax.set_ylabel("Score (%)"); ax.set_ylim(45, 105)
+    
+    ax.set_title(f"k=4 QFS Subset: Noise-Stressed CV (σ={SIGMA})\n"
+                 "Shows honest fold-to-fold variation", fontweight="bold")
+    
+    # Legend moved completely outside the plot
+    ax.legend(bbox_to_anchor=(1.02, 1), loc="upper left", borderaxespad=0, fontsize=10)
+    
     ax.grid(axis="y", ls="--", alpha=0.4); spine_off(ax)
 
-    # ── Right: clean (documented as trivial baseline) ──────────────────────
-    ax = axes[1]
-    for i, (m, col) in enumerate(zip(metrics, MCOLS)):
-        ax.bar(x + (i-2)*w, fdf_c[m], w, label=m,
-               color=col, edgecolor="black", lw=0.7, alpha=0.88)
-    ax.set_xticks(x); ax.set_xticklabels(fdf_c["Fold"], fontsize=11)
-    ax.set_ylim(85, 105)
-    ax.set_title("Clean CV (100% — Std_ExG trivially separates)\n"
-                 "Shown for reference only", fontweight="bold",
-                 color="#B71C1C")
-    ax.legend(loc="lower right", fontsize=8.5)
-    ax.grid(axis="y", ls="--", alpha=0.4); spine_off(ax)
-
-    fig.suptitle("k=4 QFS Subset: Per-Fold CV Metrics\n"
-                 "Left = honest (noise-stressed) | Right = clean (trivially 100%)",
-                 fontsize=13, fontweight="bold")
     plt.tight_layout()
     p = os.path.join(OUT, "k4_07_cv_per_fold_metrics.png")
     plt.savefig(p, dpi=300, bbox_inches="tight"); plt.close()
