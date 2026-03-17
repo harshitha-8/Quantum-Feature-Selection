@@ -1,0 +1,12 @@
+Method,k,Features,Clean_Acc,Clean_AUC,Clean_F1,CV_Acc,CV_Std,Acc_Fog,Acc_Glare,Acc_Shadow
+NonExG_k2,2,Mean_RBR|Mean_B,0.9462,0.9879,0.9533,0.9299,0.0213,0.8344,0.6968,0.7333
+NonExG_k4,4,Mean_RBR|Mean_B|Correlation|Mean_NGRDI,0.9978,1.0,0.9981,0.9972,0.0023,0.7333,0.5742,0.7699
+NonExG_k6,6,Mean_RBR|Mean_B|Correlation|Mean_NGRDI|Contrast|Homogeneity,1.0,1.0,1.0,1.0,0.0,0.5226,0.4495,0.7699
+QFS_k2,2,Std_ExG|Mean_RBR,1.0,1.0,1.0,1.0,0.0,0.8043,0.5978,0.8667
+QFS_k4,4,Std_ExG|Mean_RBR|Mean_B|Correlation,1.0,1.0,1.0,1.0,0.0,0.8301,0.628,0.7699
+QFS_k6,6,Std_ExG|Mean_RBR|Mean_B|Correlation|Mean_ExG|Mean_NGRDI,1.0,1.0,1.0,1.0,0.0,0.8602,0.529,0.7699
+MI_k2,2,Std_ExG|Mean_ExG,1.0,1.0,1.0,1.0,0.0,0.8151,0.5226,0.8688
+MI_k4,4,Std_ExG|Mean_ExG|Mean_RBR|Mean_B,1.0,1.0,1.0,1.0,0.0,0.9054,0.5935,0.9634
+MI_k6,6,Std_ExG|Mean_ExG|Mean_RBR|Mean_B|Correlation|Mean_NGRDI,1.0,1.0,1.0,1.0,0.0,0.8946,0.5054,0.7699
+ExG_trivial_k1,1,Mean_ExG,1.0,1.0,1.0,1.0,0.0,0.7871,0.5355,0.9634
+ExG_trivial_k2,2,Std_ExG|Mean_ExG,1.0,1.0,1.0,1.0,0.0,0.8151,0.5226,0.8688
