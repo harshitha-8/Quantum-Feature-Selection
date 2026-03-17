@@ -207,35 +207,62 @@ plt.rcParams.update({
 })
 SPINE_OFF = lambda ax: [ax.spines[s].set_visible(False) for s in ["top","right"]]
 
-# ─── PLOT 1: Honest k-scaling bar chart (CV accuracy) ────────────────────────
+# ─── PLOT 1: Honest k-scaling bar chart (Clean CV vs Noise) ────────────────────
 def plot1_cv_bars(res):
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5), sharey=True, facecolor="white")
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5.5), sharey=True, facecolor="white")
     tracks = {
         "Non-Trivial Scaling\n(No ExG)":  ["NonExG_k2","NonExG_k4","NonExG_k6"],
         "QFS Quantum-Selected":          ["QFS_k2","QFS_k4","QFS_k6"],
         "Classical MI Baselines":        ["MI_k2","MI_k4","MI_k6"],
     }
+    
+    # We will plot Clean CV vs Noise (sigma=0.15, which is index 3 in sigmas)
+    SIGMA_IDX = 3
+    
     for ax, (title, names) in zip(axes, tracks.items()):
-        ks     = [res[n]["k"] for n in names]
-        means  = [res[n]["CV_mean"]*100 for n in names]
-        stds   = [res[n]["CV_std"]*100 for n in names]
+        ks     = np.array([res[n]["k"] for n in names])
+        means  = np.array([res[n]["CV_mean"]*100 for n in names])
+        stds   = np.array([res[n]["CV_std"]*100 for n in names])
+        noises = np.array([res[n]["noise_accs"][SIGMA_IDX]*100 for n in names])
         colors = [COLORS[n] for n in names]
-        bars   = ax.bar(ks, means, color=colors, edgecolor="black",
-                        linewidth=0.9, width=0.8,
-                        yerr=stds, capsize=6, error_kw=dict(lw=1.5))
-        for bar, m, s in zip(bars, means, stds):
-            ax.text(bar.get_x()+bar.get_width()/2, bar.get_height()+s+0.15,
-                    f"{m:.1f}%", ha="center", va="bottom", fontsize=9.5, fontweight="bold")
+        
+        w = 0.4
+        # Clean CV Bar
+        b1 = ax.bar(ks - w/2, means, color=colors, edgecolor="black",
+                    linewidth=0.9, width=w, yerr=stds, capsize=4, error_kw=dict(lw=1.2),
+                    label="Clean CV")
+        # Noise-Stressed Bar
+        b2 = ax.bar(ks + w/2, noises, color=colors, edgecolor="black",
+                    linewidth=0.9, width=w, alpha=0.45, hatch="///",
+                    label="Noise (σ=0.15)")
+                    
+        # Annotate Clean CV
+        for bar, m in zip(b1, means):
+            if m > 99.0: # If it's trivial 100%, put the text slightly inside
+                ax.text(bar.get_x() + bar.get_width()/2, 101, "100%", 
+                        ha="center", va="bottom", fontsize=8.5, fontweight="bold", color="#B71C1C")
+            else:
+                ax.text(bar.get_x() + bar.get_width()/2, bar.get_height()+1.5, f"{m:.1f}%", 
+                        ha="center", va="bottom", fontsize=8.5, fontweight="bold")
+                        
+        # Annotate Noise accuracy
+        for bar, n in zip(b2, noises):
+            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height()+1, f"{n:.1f}%", 
+                    ha="center", va="bottom", fontsize=8.5, color="#424242")
+                    
         ax.set_xticks(ks); ax.set_xticklabels([f"k={k}" for k in ks])
         ax.set_title(title, fontweight="bold")
-        ax.set_ylim(70, 105)
+        ax.set_ylim(60, 108)
+        if title.startswith("Non-Trivial"):
+            ax.legend(loc="upper left", fontsize=9)
         ax.grid(axis="y", ls="--", alpha=0.5); SPINE_OFF(ax)
-    axes[0].set_ylabel("5-Fold CV Accuracy (%) ± std")
-    fig.suptitle("5-Fold Stratified CV Accuracy by Feature Subset Size\n"
-                 "Honest evaluation: each track isolated by feature type",
-                 fontsize=14, fontweight="bold", y=1.02)
+        
+    axes[0].set_ylabel("Accuracy (%)")
+    fig.suptitle("Scaling Robustness: Clean CV vs. Noise-Stressed Evaluating (σ=0.15)\n"
+                 "Breaks the 'Trivial 100%' illusion by showing true degradation",
+                 fontsize=14, fontweight="bold", y=1.03)
     plt.tight_layout()
-    path = os.path.join(PLOTS_DIR, "honest_01_cv_bars.png")
+    path = os.path.join(PLOTS_DIR, "k_comparison", "honest_01_cv_bars.png")
     plt.savefig(path, dpi=300, bbox_inches="tight"); plt.close()
     print(f"  Saved: {path}")
 
