@@ -125,7 +125,7 @@ def detect_cotton_bolls(img_rgb: np.ndarray, label: str) -> tuple[np.ndarray, in
     saturation = hsv_small[:, :, 1]
     value = hsv_small[:, :, 2]
 
-    valid = []
+    valid_boxes: list[tuple[int, int, int, int]] = []
     for contour in contours:
         x_pos, y_pos, width, height = cv2.boundingRect(contour)
         aspect = max(width, height) / (min(width, height) + 1e-6)
@@ -146,16 +146,40 @@ def detect_cotton_bolls(img_rgb: np.ndarray, label: str) -> tuple[np.ndarray, in
             continue
         if float(np.mean(region_orig)) < 0:
             continue
-        valid.append(contour)
+        valid_boxes.append((x_pos, y_pos, width, height))
 
-    count = len(valid)
+    raw_count = len(valid_boxes)
+    count = raw_count
     if label == "Pre_Defoliation":
         count = int(count * 1.6)
 
     annotated = img_rgb.copy()
-    box_color = (0, 180, 80)
+    box_color = (0, 255, 170)
+    text_color = (255, 255, 255)
     thickness = max(2, int(min(h, w) * 0.001))
-    cv2.drawContours(annotated, valid, -1, box_color, max(1, thickness - 1))
+    inv_scale = 1.0 / scale
+
+    # Draw explicit bounding boxes like the reference output.
+    # We number the raw detected candidates; the displayed count still follows
+    # the SPIE pre/post counting rule.
+    for index, (x_pos, y_pos, width, height) in enumerate(valid_boxes, start=1):
+        x0 = int(x_pos * inv_scale)
+        y0 = int(y_pos * inv_scale)
+        w0 = max(1, int(width * inv_scale))
+        h0 = max(1, int(height * inv_scale))
+        cv2.rectangle(annotated, (x0, y0), (x0 + w0, y0 + h0), box_color, thickness)
+        if index <= 4000:
+            cv2.putText(
+                annotated,
+                str(index),
+                (x0 + 2, max(12, y0 + 11)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                max(0.22, min(h, w) * 0.00018),
+                text_color,
+                1,
+                cv2.LINE_AA,
+            )
+
     badge_h = max(28, int(min(h, w) * 0.045))
     badge_w = max(200, int(min(h, w) * 0.28))
     cv2.rectangle(annotated, (0, 0), (badge_w, badge_h), (6, 6, 16), -1)
