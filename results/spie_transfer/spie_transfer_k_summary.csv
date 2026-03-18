@@ -1,0 +1,4 @@
+k,candidate_pool,best_subset,vqc_mean_accuracy,svm_accuracy_mean,svm_accuracy_std,svm_f1_mean,svm_auc_mean
+2,"['Mean_ExG', 'Std_ExG', 'ExG_pos_frac', 'Log_RBR', 'Mean_RBR', 'Cotton_Boll_Count', 'Mean_B', 'Contrast']","['ExG_pos_frac', 'Mean_B']",0.7166666666666668,0.9975445058317987,0.003472593154998383,0.9980276134122287,1.0
+4,"['Mean_ExG', 'Std_ExG', 'ExG_pos_frac', 'Log_RBR', 'Mean_RBR', 'Cotton_Boll_Count', 'Mean_B', 'Contrast']","['Mean_ExG', 'Log_RBR', 'Mean_RBR', 'Mean_B']",0.6611111111111111,1.0,0.0,1.0,1.0
+6,"['Mean_ExG', 'Std_ExG', 'ExG_pos_frac', 'Log_RBR', 'Mean_RBR', 'Cotton_Boll_Count', 'Mean_B', 'Contrast']","['Mean_ExG', 'Std_ExG', 'ExG_pos_frac', 'Log_RBR', 'Cotton_Boll_Count', 'Contrast']",0.6222222222222222,1.0,0.0,1.0,1.0
