@@ -1,0 +1,7 @@
+sample_type,filename,k,predicted_label,post_probability,pre_probability,cotton_boll_count,features
+Pre,DJI_20250929095441_0220_D.JPG,k=2,Pre_Defoliation,0.06384803310415925,0.9361519668958408,4836,"ExG_pos_frac, Mean_B"
+Pre,DJI_20250929095441_0220_D.JPG,k=4,Pre_Defoliation,0.006991280310971834,0.9930087196890283,4836,"Mean_ExG, Log_RBR, Mean_RBR, Mean_B"
+Pre,DJI_20250929095441_0220_D.JPG,k=6,Pre_Defoliation,0.0033302807114429524,0.996669719288557,4836,"Mean_ExG, Std_ExG, ExG_pos_frac, Log_RBR, Cotton_Boll_Count, Contrast"
+Post,DJI_20250929124231_0050_D.JPG,k=2,Post_Defoliation,0.8964055032209484,0.1035944967790516,3149,"ExG_pos_frac, Mean_B"
+Post,DJI_20250929124231_0050_D.JPG,k=4,Post_Defoliation,0.9953567807502602,0.00464321924973976,3149,"Mean_ExG, Log_RBR, Mean_RBR, Mean_B"
+Post,DJI_20250929124231_0050_D.JPG,k=6,Post_Defoliation,0.9965129985214933,0.0034870014785067112,3149,"Mean_ExG, Std_ExG, ExG_pos_frac, Log_RBR, Cotton_Boll_Count, Contrast"
