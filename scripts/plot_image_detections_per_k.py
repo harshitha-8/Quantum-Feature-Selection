@@ -220,6 +220,57 @@ def detect_cotton_bolls(img_rgb: np.ndarray, label: str) -> tuple[np.ndarray, in
     return annotated, estimated_total, visible_box_count
 
 
+def draw_confidence_overlay(
+    image_rgb: np.ndarray,
+    subset_name: str,
+    pred_label: str,
+    post_prob: float,
+    pre_prob: float,
+) -> np.ndarray:
+    annotated = image_rgb.copy()
+    h, w = annotated.shape[:2]
+
+    confidence = post_prob if pred_label == "Post_Defoliation" else pre_prob
+    conf_pct = confidence * 100.0
+
+    panel_w = max(260, int(w * 0.34))
+    panel_h = max(72, int(h * 0.11))
+    x0 = max(8, int(w * 0.015))
+    y0 = max(42, int(h * 0.02))
+    x1 = min(w - 8, x0 + panel_w)
+    y1 = min(h - 8, y0 + panel_h)
+
+    cv2.rectangle(annotated, (x0, y0), (x1, y1), (10, 12, 24), -1)
+    cv2.rectangle(annotated, (x0, y0), (x1, y1), (255, 255, 255), 1)
+
+    label_text = "POST" if pred_label == "Post_Defoliation" else "PRE"
+    accent = (0, 220, 140) if pred_label == "Post_Defoliation" else (255, 191, 0)
+    cv2.putText(
+        annotated,
+        f"{subset_name}  {label_text}  {conf_pct:.1f}%",
+        (x0 + 10, y0 + max(18, int(panel_h * 0.34))),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        max(0.45, min(h, w) * 0.00042),
+        accent,
+        2,
+        cv2.LINE_AA,
+    )
+
+    bar_x0 = x0 + 10
+    bar_y0 = y0 + max(30, int(panel_h * 0.52))
+    bar_x1 = x1 - 10
+    bar_y1 = y1 - 10
+    cv2.rectangle(annotated, (bar_x0, bar_y0), (bar_x1, bar_y1), (55, 60, 72), -1)
+    fill_x1 = bar_x0 + int((bar_x1 - bar_x0) * confidence)
+    cv2.rectangle(annotated, (bar_x0, bar_y0), (fill_x1, bar_y1), accent, -1)
+    cv2.rectangle(annotated, (bar_x0, bar_y0), (bar_x1, bar_y1), (230, 230, 230), 1)
+
+    # Add a thick border so confidence difference is immediately visible at a glance.
+    border_color = accent if confidence >= 0.95 else ((255, 170, 0) if confidence >= 0.85 else (255, 99, 71))
+    cv2.rectangle(annotated, (0, 0), (w - 1, h - 1), border_color, max(4, int(min(h, w) * 0.006)))
+    return annotated
+
+
 def predict_image(
     df: pd.DataFrame,
     subsets: dict[str, list[str]],
@@ -252,6 +303,7 @@ def predict_image(
         pred_idx = int(np.argmax(probs))
         pred_label = "Post_Defoliation" if pred_idx == 1 else "Pre_Defoliation"
         annotated, count, visible_box_count = detect_cotton_bolls(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB), pred_label)
+        annotated = draw_confidence_overlay(annotated, key, pred_label, float(probs[1]), float(probs[0]))
 
         results[key] = {
             "features": feature_names,
@@ -294,14 +346,6 @@ def build_board(pre_result: dict[str, object], post_result: dict[str, object], o
                 f"Post={panel['post_prob']:.3f} | Pre={panel['pre_prob']:.3f} | Est.Bolls={panel['count']} | Boxes={panel['visible_box_count']}",
                 fontsize=9.5,
                 fontweight="bold",
-            )
-            ax.text(
-                0.02,
-                -0.08,
-                ", ".join(panel["features"]),
-                transform=ax.transAxes,
-                fontsize=8.2,
-                color="#455A64",
             )
 
     fig.suptitle(
