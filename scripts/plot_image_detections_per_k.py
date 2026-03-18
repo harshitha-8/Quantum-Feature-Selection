@@ -128,8 +128,22 @@ def detect_cotton_bolls(img_rgb: np.ndarray, label: str) -> tuple[np.ndarray, in
     valid_boxes: list[tuple[int, int, int, int]] = []
     for contour in contours:
         x_pos, y_pos, width, height = cv2.boundingRect(contour)
+        contour_area = cv2.contourArea(contour)
         aspect = max(width, height) / (min(width, height) + 1e-6)
         if aspect > 3.0:
+            continue
+        bbox_area = width * height
+        if bbox_area <= 0:
+            continue
+
+        # Suppress large merged regions that span crop rows instead of individual bolls.
+        if bbox_area > 0.0030 * (dw * dh):
+            continue
+        if width > 0.10 * dw or height > 0.10 * dh:
+            continue
+
+        fill_ratio = contour_area / float(bbox_area)
+        if fill_ratio < 0.10:
             continue
 
         roi_mask = np.zeros((dh, dw), dtype=np.uint8)
