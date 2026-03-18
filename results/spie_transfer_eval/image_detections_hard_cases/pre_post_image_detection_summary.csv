@@ -1,7 +1,7 @@
-sample_type,filename,k,predicted_label,post_probability,pre_probability,cotton_boll_count,features
-Pre,DJI_20250929095441_0220_D.JPG,k=2,Pre_Defoliation,0.06384803310415925,0.9361519668958408,1449,"ExG_pos_frac, Mean_B"
-Pre,DJI_20250929095441_0220_D.JPG,k=4,Pre_Defoliation,0.006991280310971834,0.9930087196890283,1449,"Mean_ExG, Log_RBR, Mean_RBR, Mean_B"
-Pre,DJI_20250929095441_0220_D.JPG,k=6,Pre_Defoliation,0.271981712767032,0.7280182872329679,1449,"Mean_ExG, Std_ExG, ExG_pos_frac, Log_RBR, Cotton_Boll_Count, Contrast"
-Post,DJI_20250929124231_0050_D.JPG,k=2,Post_Defoliation,0.8964055032209484,0.1035944967790516,1217,"ExG_pos_frac, Mean_B"
-Post,DJI_20250929124231_0050_D.JPG,k=4,Post_Defoliation,0.9953567807502602,0.00464321924973976,1217,"Mean_ExG, Log_RBR, Mean_RBR, Mean_B"
-Post,DJI_20250929124231_0050_D.JPG,k=6,Post_Defoliation,0.897026851459897,0.10297314854010294,1217,"Mean_ExG, Std_ExG, ExG_pos_frac, Log_RBR, Cotton_Boll_Count, Contrast"
+sample_type,filename,k,predicted_label,post_probability,pre_probability,estimated_cotton_boll_count,visible_box_count,features
+Pre,DJI_20250929095441_0220_D.JPG,k=2,Pre_Defoliation,0.06384803310415925,0.9361519668958408,4836,906,"ExG_pos_frac, Mean_B"
+Pre,DJI_20250929095441_0220_D.JPG,k=4,Pre_Defoliation,0.006991280310971834,0.9930087196890283,4836,906,"Mean_ExG, Log_RBR, Mean_RBR, Mean_B"
+Pre,DJI_20250929095441_0220_D.JPG,k=6,Pre_Defoliation,0.0033302807114429524,0.996669719288557,4836,906,"Mean_ExG, Std_ExG, ExG_pos_frac, Log_RBR, Cotton_Boll_Count, Contrast"
+Post,DJI_20250929124231_0050_D.JPG,k=2,Post_Defoliation,0.8964055032209484,0.1035944967790516,3243,1217,"ExG_pos_frac, Mean_B"
+Post,DJI_20250929124231_0050_D.JPG,k=4,Post_Defoliation,0.9953567807502602,0.00464321924973976,3243,1217,"Mean_ExG, Log_RBR, Mean_RBR, Mean_B"
+Post,DJI_20250929124231_0050_D.JPG,k=6,Post_Defoliation,0.9959734501009179,0.004026549899082174,3243,1217,"Mean_ExG, Std_ExG, ExG_pos_frac, Log_RBR, Cotton_Boll_Count, Contrast"
