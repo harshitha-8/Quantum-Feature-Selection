@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
-ASSET_DIR = ROOT / "results" / "cvpr_demo_assets"
+ASSET_DIR = ROOT / "cvpr demo"
 PRE_IMAGE = Path("/Volumes/T9/ICML/Part_one_pre_def_rgb/DJI_20250929100235_0457_D.JPG")
 POST_IMAGE = Path("/Volumes/T9/ICML/205_Post_Def_rgb/DJI_20250929124641_0175_D.JPG")
 
@@ -324,8 +324,13 @@ def save_single_panel(source: Path, title: str, subtitle: str, output_name: str)
 def save_heat_panel(source: Path, label: str, title: str, subtitle: str, output_name: str) -> None:
     image = open_full_image(source)
     _, heatmap, detection, boxes = run_cotton_visual_pipeline(image, label)
-    # The caller expects just the heatmap for this panel
     panel = dynamic_resize(heatmap, 3840)
+    add_academic_header(panel, title, f"{subtitle} (Detected {len(boxes)} items)").save(ASSET_DIR / output_name, format="PNG", optimize=True)
+
+def save_detect_panel(source: Path, label: str, title: str, subtitle: str, output_name: str) -> None:
+    image = open_full_image(source)
+    _, _, detection, boxes = run_cotton_visual_pipeline(image, label)
+    panel = dynamic_resize(detection, 3840)
     add_academic_header(panel, title, f"{subtitle} (Detected {len(boxes)} items)").save(ASSET_DIR / output_name, format="PNG", optimize=True)
 
 def build_scene_analysis_figure(source: Path, label: str, figure_title: str, caption: str, output_name: str) -> None:
@@ -340,13 +345,30 @@ def build_scene_analysis_figure(source: Path, label: str, figure_title: str, cap
     )
 
 def main() -> None:
+    import shutil
+    print("Generating pre-defoliation images...")
     ASSET_DIR.mkdir(parents=True, exist_ok=True)
-    save_single_panel(PRE_IMAGE, "Pre-Defoliation UAV Image", "Full frame from the field before defoliation", "pre_normal.png")
-    save_heat_panel(PRE_IMAGE, "Pre_Defoliation", "Pre-Defoliation Cotton Response Map", "Response map", "pre_heatmap.png")
-    save_single_panel(POST_IMAGE, "Post-Defoliation UAV Image", "Full frame after defoliation", "post_normal.png")
-    save_heat_panel(POST_IMAGE, "Post_Defoliation", "Post-Defoliation Cotton Response Map", "Response map", "post_heatmap.png")
-    build_scene_analysis_figure(PRE_IMAGE, "Pre_Defoliation", "Pre-defoliation scene analysis", "Scene showing original UAV image, cotton response map, and detections", "pre_triptych.png")
-    build_scene_analysis_figure(POST_IMAGE, "Post_Defoliation", "Post-defoliation scene analysis", "Scene showing original UAV image, cotton response map, and detections", "post_triptych.png")
+    save_single_panel(PRE_IMAGE, "Pre-Defoliation UAV Image", "Full frame from the field before defoliation", "01_pre_original.png")
+    save_heat_panel(PRE_IMAGE, "Pre_Defoliation", "Pre-Defoliation Cotton Response Map", "Response map", "02_pre_heatmap.png")
+    save_detect_panel(PRE_IMAGE, "Pre_Defoliation", "Pre-Defoliation Cotton Detects", "Bounding boxes overlaid", "03_pre_bounding_box.png")
+    build_scene_analysis_figure(PRE_IMAGE, "Pre_Defoliation", "Pre-defoliation scene analysis", "Scene showing original UAV image, cotton response map, and detections", "04_pre_composite.png")
+
+    print("Generating post-defoliation images...")
+    save_single_panel(POST_IMAGE, "Post-Defoliation UAV Image", "Full frame after defoliation", "05_post_original.png")
+    save_heat_panel(POST_IMAGE, "Post_Defoliation", "Post-Defoliation Cotton Response Map", "Response map", "06_post_heatmap.png")
+    save_detect_panel(POST_IMAGE, "Post_Defoliation", "Post-Defoliation Cotton Detects", "Bounding boxes overlaid", "07_post_bounding_box.png")
+    build_scene_analysis_figure(POST_IMAGE, "Post_Defoliation", "Post-defoliation scene analysis", "Scene showing original UAV image, cotton response map, and detections", "08_post_composite.png")
+
+    print("Copying k_comparison analysis plots...")
+    plots_dir = ROOT / "results" / "plots" / "k_comparison"
+    if plots_dir.exists():
+        for f in sorted(plots_dir.glob("*.png")):
+            print(f"Copying {f.name}...")
+            shutil.copy(f, ASSET_DIR / f.name)
+    else:
+        print("Warning: Directory results/plots/k_comparison not found")
+        
+    print("All image generation operations completed.")
 
 if __name__ == "__main__":
     main()
