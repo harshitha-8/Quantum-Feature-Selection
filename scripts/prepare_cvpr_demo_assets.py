@@ -176,17 +176,84 @@ def gaussian_heatmap(shape: tuple[int, int], boxes: list[tuple[int, int, int, in
     return np.clip(heat, 0.0, 1.0)
 
 
+def score_boxes(base_rgb: np.ndarray, boxes: list[tuple[int, int, int, int]]) -> list[tuple[float, tuple[int, int, int, int]]]:
+    rgb = base_rgb.astype(np.float32) / 255.0
+    gray = rgb.mean(axis=2)
+    scored: list[tuple[float, tuple[int, int, int, int]]] = []
+    for box in boxes:
+        x_pos, y_pos, box_w, box_h = box
+        x1 = min(base_rgb.shape[1], x_pos + box_w)
+        y1 = min(base_rgb.shape[0], y_pos + box_h)
+        patch_rgb = rgb[y_pos:y1, x_pos:x1]
+        patch_gray = gray[y_pos:y1, x_pos:x1]
+        if patch_rgb.size == 0:
+            continue
+        whiteness = float(patch_gray.mean())
+        local_contrast = float(patch_gray.std())
+        green_penalty = float(np.maximum(0.0, patch_rgb[:, :, 1].mean() - patch_rgb[:, :, 0].mean()))
+        score = whiteness + (0.55 * local_contrast) - (0.35 * green_penalty)
+        scored.append((score, box))
+    scored.sort(key=lambda item: item[0], reverse=True)
+    return scored
+
+
+def iou(box_a: tuple[int, int, int, int], box_b: tuple[int, int, int, int]) -> float:
+    ax, ay, aw, ah = box_a
+    bx, by, bw, bh = box_b
+    ax1, ay1 = ax + aw, ay + ah
+    bx1, by1 = bx + bw, by + bh
+    ix0, iy0 = max(ax, bx), max(ay, by)
+    ix1, iy1 = min(ax1, bx1), min(ay1, by1)
+    if ix1 <= ix0 or iy1 <= iy0:
+        return 0.0
+    inter = float((ix1 - ix0) * (iy1 - iy0))
+    union = float(aw * ah + bw * bh - inter)
+    return inter / max(union, 1.0)
+
+
+def select_salient_boxes(
+    base_rgb: np.ndarray,
+    boxes: list[tuple[int, int, int, int]],
+    *,
+    max_boxes: int = 180,
+    min_center_gap: int = 20,
+) -> list[tuple[int, int, int, int]]:
+    chosen: list[tuple[int, int, int, int]] = []
+    for _, box in score_boxes(base_rgb, boxes):
+        x_pos, y_pos, box_w, box_h = box
+        cx = x_pos + box_w / 2.0
+        cy = y_pos + box_h / 2.0
+        keep = True
+        for prev in chosen:
+            px, py, pw, ph = prev
+            pcx = px + pw / 2.0
+            pcy = py + ph / 2.0
+            if ((cx - pcx) ** 2 + (cy - pcy) ** 2) ** 0.5 < min_center_gap:
+                keep = False
+                break
+            if iou(box, prev) > 0.10:
+                keep = False
+                break
+        if keep:
+            chosen.append(box)
+        if len(chosen) >= max_boxes:
+            break
+    return chosen
+
+
 def build_cotton_heatmap(base_rgb: np.ndarray, boxes: list[tuple[int, int, int, int]]) -> Image.Image:
-    heat = gaussian_heatmap(base_rgb.shape[:2], boxes)
-    darkened = (base_rgb.astype(np.float32) * 0.38).astype(np.uint8)
+    salient_boxes = select_salient_boxes(base_rgb, boxes, max_boxes=150, min_center_gap=26)
+    heat = gaussian_heatmap(base_rgb.shape[:2], salient_boxes)
+    heat = np.where(heat > 0.16, heat, 0.0)
+    darkened = (base_rgb.astype(np.float32) * 0.42).astype(np.uint8)
 
     # Red-yellow hotspot map restricted to detected cotton regions.
-    red = np.clip(255 * (heat ** 0.45), 0, 255)
-    green = np.clip(220 * np.maximum(0.0, heat - 0.22) / 0.78, 0, 255)
-    blue = np.clip(40 * np.maximum(0.0, heat - 0.55) / 0.45, 0, 255)
+    red = np.clip(255 * (heat ** 0.52), 0, 255)
+    green = np.clip(165 * np.maximum(0.0, heat - 0.28) / 0.72, 0, 255)
+    blue = np.clip(20 * np.maximum(0.0, heat - 0.65) / 0.35, 0, 255)
     hotspot = np.stack([red, green, blue], axis=-1).astype(np.uint8)
 
-    alpha = np.clip(heat[..., None] * 0.9, 0.0, 0.9)
+    alpha = np.clip((heat ** 0.85)[..., None] * 0.92, 0.0, 0.92)
     blended = np.clip(darkened * (1.0 - alpha) + hotspot * alpha, 0, 255).astype(np.uint8)
     return Image.fromarray(blended, mode="RGB")
 
@@ -201,7 +268,12 @@ def build_detection_view(image: Image.Image, label: str) -> tuple[Image.Image, l
         thickness=3,
         shrink_factor=0.78,
     )
-    return Image.fromarray(annotated), boxes, estimated_total
+    salient_boxes = select_salient_boxes(image_np, boxes, max_boxes=170, min_center_gap=24)
+    clean = image_np.copy()
+    overlay_color = (0, 88, 54)
+    for x_pos, y_pos, box_w, box_h in salient_boxes:
+        cv2.rectangle(clean, (x_pos, y_pos), (x_pos + box_w, y_pos + box_h), overlay_color, 2)
+    return Image.fromarray(clean), salient_boxes, estimated_total
 
 
 def add_academic_header(image: Image.Image, title: str, subtitle: str) -> Image.Image:
@@ -231,15 +303,15 @@ def save_heat_panel(source: Path, label: str, title: str, subtitle: str, output_
 
 def build_triptych(source: Path, label: str, title: str, subtitle: str, output_name: str) -> None:
     image = open_full_image(source)
-    detection_view, boxes, estimated_total = build_detection_view(image, label)
+    detection_view, boxes, _ = build_detection_view(image, label)
     heatmap_view = build_cotton_heatmap(np.asarray(image), boxes)
 
     panel_w = (CANVAS_SIZE[0] - (PANEL_GAP * 2)) // 3
     panel_h = CANVAS_SIZE[1]
     panels = [
-        ("Original image", contain_on_canvas(image, (panel_w, panel_h))),
+        ("Original UAV image", contain_on_canvas(image, (panel_w, panel_h))),
         ("Cotton response map", contain_on_canvas(heatmap_view, (panel_w, panel_h))),
-        ("Detected cotton bolls", contain_on_canvas(detection_view, (panel_w, panel_h))),
+        ("Detected cotton regions", contain_on_canvas(detection_view, (panel_w, panel_h))),
     ]
 
     board = Image.new("RGB", CANVAS_SIZE, "white")
@@ -252,8 +324,7 @@ def build_triptych(source: Path, label: str, title: str, subtitle: str, output_n
         draw.rectangle((x_pos + 18, 18, x_pos + 320, 62), fill="white", outline="#d9dfe6", width=1)
         draw.text((x_pos + 32, 27), panel_title, font=label_font, fill="#1a1a1a")
 
-    full_title = f"{title}  |  Estimated cotton bolls: {estimated_total:,}"
-    add_academic_header(board, full_title, subtitle).save(ASSET_DIR / output_name, quality=96)
+    add_academic_header(board, title, subtitle).save(ASSET_DIR / output_name, quality=98)
 
 
 def main() -> None:
@@ -288,8 +359,8 @@ def main() -> None:
     build_triptych(
         PRE_IMAGE,
         "Pre_Defoliation",
-        "Pre-Defoliation Triptych",
-        "Left: full input image. Middle: cotton-only heatmap from candidate detections. Right: refined dark-green bounding boxes without numeric clutter.",
+        "Pre-defoliation scene analysis",
+        "Pre-defoliation scene showing the original UAV image, the model-derived cotton response map, and the refined detection overlay for candidate cotton regions.",
         "pre_triptych.png",
     )
     build_triptych(
