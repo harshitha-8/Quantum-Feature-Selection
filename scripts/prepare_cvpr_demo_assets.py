@@ -112,14 +112,8 @@ def select_salient_boxes(base_rgb: np.ndarray, boxes: list[tuple[int, int, int, 
 
 def cotton_candidate_boxes(img_rgb: np.ndarray, label: str) -> list[tuple[int, int, int, int]]:
     h, w = img_rgb.shape[:2]
-    scale = DETECT_MAX_DIM / max(h, w)
-    if scale < 1.0:
-        dw, dh = int(w * scale), int(h * scale)
-        small = cv2.resize(img_rgb, (dw, dh), interpolation=cv2.INTER_AREA)
-    else:
-        dw, dh = w, h
-        scale = 1.0
-        small = img_rgb.copy()
+    small = img_rgb.copy()
+    dw, dh = w, h
 
     small_f = small.astype(np.float32) / 255.0
     r, g_ch, b = small_f[:, :, 0], small_f[:, :, 1], small_f[:, :, 2]
@@ -153,7 +147,7 @@ def cotton_candidate_boxes(img_rgb: np.ndarray, label: str) -> list[tuple[int, i
 
     weighted = np.clip(weighted, 0, 255).astype(np.uint8)
     otsu_val, _ = cv2.threshold(weighted, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    thresh_val = max(8, min(40, int(otsu_val * 0.22))) 
+    thresh_val = max(15, min(80, int(otsu_val * 0.70))) 
     _, boll_mask = cv2.threshold(weighted, thresh_val, 255, cv2.THRESH_BINARY)
     boll_mask = cv2.morphologyEx(boll_mask, cv2.MORPH_OPEN, se_small, iterations=1)
     contours, _ = cv2.findContours(boll_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -177,21 +171,12 @@ def cotton_candidate_boxes(img_rgb: np.ndarray, label: str) -> list[tuple[int, i
         region_exg = exg_n[pixels]
         region_gray = gray.astype(np.float32)[pixels] / 255.0
         if len(region_s) == 0: continue
-        if float(np.mean(region_s)) > 0.82 and label == "Pre_Defoliation": continue
-        if float(np.mean(region_gray)) < 0.05: continue
-        if label == "Pre_Defoliation" and float(np.mean(region_exg)) > 0.88: continue
+        if float(np.mean(region_s)) > 0.75 and label == "Pre_Defoliation": continue
+        if float(np.mean(region_gray)) < 0.15: continue
+        if label == "Pre_Defoliation" and float(np.mean(region_exg)) > 0.85: continue
         candidate_boxes.append((x_pos, y_pos, width, height, contour_area))
 
-    inv_scale = 1.0 / scale
-    full_res_boxes: list[tuple[int, int, int, int]] = []
-    for x_pos, y_pos, width, height, _ in candidate_boxes:
-        x0 = int(x_pos * inv_scale)
-        y0 = int(y_pos * inv_scale)
-        w0 = max(1, int(width * inv_scale))
-        h0 = max(1, int(height * inv_scale))
-        full_res_boxes.append((x0, y0, w0, h0))
-
-    return full_res_boxes
+    return [(x, y, w, h) for x, y, w, h, _ in candidate_boxes]
 
 def gaussian_heatmap(shape: tuple[int, int], boxes: list[tuple[int, int, int, int]]) -> np.ndarray:
     height, width = shape
