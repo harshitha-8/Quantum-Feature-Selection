@@ -101,7 +101,7 @@ def select_salient_boxes(base_rgb: np.ndarray, boxes: list[tuple[int, int, int, 
             if min_center_gap > 0 and ((cx - pcx) ** 2 + (cy - pcy) ** 2) ** 0.5 < min_center_gap:
                 keep = False
                 break
-            if iou(box, prev) > 0.45:
+            if iou(box, prev) > 0.35:
                 keep = False
                 break
         if keep:
@@ -147,7 +147,7 @@ def cotton_candidate_boxes(img_rgb: np.ndarray, label: str) -> list[tuple[int, i
 
     weighted = np.clip(weighted, 0, 255).astype(np.uint8)
     otsu_val, _ = cv2.threshold(weighted, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    thresh_val = max(5, min(30, int(otsu_val * 0.12))) 
+    thresh_val = max(10, min(50, int(otsu_val * 0.45))) 
     _, boll_mask = cv2.threshold(weighted, thresh_val, 255, cv2.THRESH_BINARY)
     boll_mask = cv2.morphologyEx(boll_mask, cv2.MORPH_OPEN, se_small, iterations=1)
     contours, _ = cv2.findContours(boll_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -157,11 +157,11 @@ def cotton_candidate_boxes(img_rgb: np.ndarray, label: str) -> list[tuple[int, i
         x_pos, y_pos, width, height = cv2.boundingRect(contour)
         contour_area = cv2.contourArea(contour)
         aspect = max(width, height) / (min(width, height) + 1e-6)
-        if aspect > 4.0:  continue
+        if aspect > 2.8:  continue
         bbox_area = width * height
         if bbox_area <= 0: continue
         fill_ratio = contour_area / float(bbox_area)
-        if fill_ratio < 0.05: continue
+        if fill_ratio < 0.12: continue
         if bbox_area > 0.0024 * (dw * dh): continue
         if width > 0.09 * dw or height > 0.09 * dh: continue
         roi_mask = np.zeros((dh, dw), dtype=np.uint8)
@@ -169,9 +169,11 @@ def cotton_candidate_boxes(img_rgb: np.ndarray, label: str) -> list[tuple[int, i
         pixels = roi_mask == 255
         region_s = saturation[pixels]
         region_exg = exg_n[pixels]
+        region_gray = gray.astype(np.float32)[pixels] / 255.0
         if len(region_s) == 0: continue
-        if float(np.mean(region_s)) > 0.90 and label == "Pre_Defoliation": continue
-        if label == "Pre_Defoliation" and float(np.mean(region_exg)) > 0.95: continue
+        if float(np.mean(region_s)) > 0.75 and label == "Pre_Defoliation": continue
+        if float(np.mean(region_gray)) < 0.10: continue
+        if label == "Pre_Defoliation" and float(np.mean(region_exg)) > 0.85: continue
         candidate_boxes.append((x_pos, y_pos, width, height, contour_area))
 
     return [(x, y, w, h) for x, y, w, h, _ in candidate_boxes]
@@ -221,7 +223,7 @@ def run_cotton_visual_pipeline(image: Image.Image, label: str) -> tuple[Image.Im
     arr = np.asarray(image.convert("RGB"))
     raw_boxes = cotton_candidate_boxes(arr, label)
     max_boxes = 28000 
-    gap = 0 
+    gap = 2 
     boxes = select_salient_boxes(arr, raw_boxes, label, max_boxes=max_boxes, min_center_gap=gap)
     heatmap_view = build_cotton_heatmap(arr, boxes)
     detection_view = draw_detection_overlay(arr, boxes)
