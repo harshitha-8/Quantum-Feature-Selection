@@ -366,7 +366,7 @@ def plot6_radar():
         vals += vals[:1]
 
         ax.plot(angles, vals, color=colors[k], linewidth=2.5,
-                label=f"k={k} Qubits (Non-Trivial)")
+                label=f"k={k} subset")
         ax.fill(angles, vals, color=colors[k], alpha=0.12)
 
     ax.set_xticks(angles[:-1])
@@ -374,7 +374,7 @@ def plot6_radar():
     ax.set_yticklabels([])
     ax.set_ylim(0, 1)
     ax.set_title(f"Multi-Metric Radar Chart at σ={sigma}\n"
-                 "(Non-Trivial subsets — honest feature scaling)",
+                 "Compared feature subsets across five evaluation metrics",
                  fontsize=13, fontweight="bold", pad=22)
     ax.legend(loc="upper right", bbox_to_anchor=(1.3, 1.15), fontsize=11)
     plt.tight_layout()

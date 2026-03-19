@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CVPR Demo: Quantum-Enhanced Cotton Defoliation Analytics</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --panel: #ffffff;
+      --line: #d2d8df;
+      --text: #111111;
+      --muted: #5c6670;
+      --accent: #27313b;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+    main { max-width: 1200px; margin: 0 auto; padding: 40px 24px 72px; }
+    h1 { font-size: 2.6rem; margin-bottom: 10px; }
+    .intro { color: var(--muted); line-height: 1.7; max-width: 900px; margin-bottom: 30px; }
+    .slide { background: var(--panel); border: 1px solid var(--line); padding: 24px; margin-bottom: 28px; }
+    .meta { color: var(--accent); font-size: 0.95rem; margin-bottom: 10px; }
+    .image-wrap { background: #ffffff; padding: 14px; margin: 18px 0; border: 1px solid var(--line); }
+    img { display: block; width: 100%; }
+    p { line-height: 1.75; color: #2c3640; font-size: 1.06rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>CVPR Demo: Quantum-Enhanced Cotton Defoliation Analytics</h1>
+    <p class="intro">The video begins with full pre- and post-defoliation UAV frames, then visualizes cotton-only response maps and refined detection overlays before moving to the ten quantitative comparison plots used in the analysis.</p>
+    
+            <section class="slide">
+              <div class="meta">1 / 16 · ICML field image</div>
+              <h2>Pre-Defoliation UAV Image</h2>
+              <div class="image-wrap">
+                <img src="../cvpr_demo_assets/pre_normal.png" alt="Pre-Defoliation UAV Image">
+              </div>
+              <p>Full pre-defoliation frame from the ICML UAV dataset. The green canopy is intact, and cotton bolls remain partially occluded by leaves and dense vegetation.</p>
+            </section>
+            
+            <section class="slide">
+              <div class="meta">2 / 16 · Detection-derived heatmap</div>
+              <h2>Pre-Defoliation Cotton Response Map</h2>
+              <div class="image-wrap">
+                <img src="../cvpr_demo_assets/pre_heatmap.png" alt="Pre-Defoliation Cotton Response Map">
+              </div>
+              <p>Cotton-only response map generated from cotton-boll candidate detections. The full image is preserved, and highlighted regions are restricted to detected cotton structures rather than the entire field.</p>
+            </section>
+            
+            <section class="slide">
+              <div class="meta">3 / 16 · ICML field image</div>
+              <h2>Post-Defoliation UAV Image</h2>
+              <div class="image-wrap">
+                <img src="../cvpr_demo_assets/post_normal.png" alt="Post-Defoliation UAV Image">
+              </div>
+              <p>Full post-defoliation frame from the ICML UAV dataset. After defoliation, exposed cotton bolls and row structure become substantially more visible across the field.</p>
+            </section>
+            
+            <section class="slide">
+              <div class="meta">4 / 16 · Detection-derived heatmap</div>
+              <h2>Post-Defoliation Cotton Response Map</h2>
+              <div class="image-wrap">
+                <img src="../cvpr_demo_assets/post_heatmap.png" alt="Post-Defoliation Cotton Response Map">
+              </div>
+              <p>Cotton-only response map generated from cotton-boll candidate detections. Highlighted regions correspond to detected cotton structures and reveal the denser exposed cotton distribution after defoliation.</p>
+            </section>
+            
+            <section class="slide">
+              <div class="meta">5 / 16 · Three-panel figure</div>
+              <h2>Pre-defoliation scene analysis</h2>
+              <div class="image-wrap">
+                <img src="../cvpr_demo_assets/pre_triptych.png" alt="Pre-defoliation scene analysis">
+              </div>
+              <p>Pre-defoliation scene showing the original UAV image, the model-derived cotton response map, and the refined detection overlay for candidate cotton regions.</p>
+            </section>
+            
+            <section class="slide">
+              <div class="meta">6 / 16 · Three-panel figure</div>
+              <h2>Post-defoliation scene analysis</h2>
+              <div class="image-wrap">
+                <img src="../cvpr_demo_assets/post_triptych.png" alt="Post-defoliation scene analysis">
+              </div>
+              <p>Post-defoliation scene showing the original UAV image, the model-derived cotton response map, and the refined detection overlay for candidate cotton regions.</p>
+            </section>
+            
+            <section class="slide">
+              <div class="meta">7 / 16 · Plot 1 of 10</div>
+              <h2>Cross-Validation Bars</h2>
+              <div class="image-wrap">
+                <img src="../plots/k_comparison_cvpr/01_cv_bars.png" alt="Cross-Validation Bars">
+              </div>
+              <p>Cross-validation accuracy and noise-stressed accuracy across the compared feature families at k=2, 4, and 6. The slide summarizes baseline behavior before the remaining stress tests.</p>
+            </section>
+            
+            <section class="slide">
+              <div class="meta">8 / 16 · Plot 2 of 10</div>
+              <h2>Noise Robustness Curve</h2>
+              <div class="image-wrap">
+                <img src="../plots/k_comparison_cvpr/02_noise_curve.png" alt="Noise Robustness Curve">
+              </div>
+              <p>Accuracy under progressively stronger Gaussian noise. This figure is useful for the demo because it emphasizes robustness rather than clean-data performance alone.</p>
+            </section>
+            
+            <section class="slide">
+              <div class="meta">9 / 16 · Plot 3 of 10</div>
+              <h2>Augmentation Robustness Matrix</h2>
+              <div class="image-wrap">
+                <img src="../plots/k_comparison_cvpr/03_aug_heatmap.png" alt="Augmentation Robustness Matrix">
+              </div>
+              <p>Performance under clean, fog, glare, and shadow conditions. The matrix compactly summarizes how each feature family behaves under major field perturbations.</p>
+            </section>
+            
+            <section class="slide">
+              <div class="meta">10 / 16 · Plot 4 of 10</div>
+              <h2>ROC and Precision-Recall Curves</h2>
+              <div class="image-wrap">
+                <img src="../plots/k_comparison_cvpr/04_roc_pr.png" alt="ROC and Precision-Recall Curves">
+              </div>
+              <p>ROC and precision-recall curves provide threshold-free comparisons across the k-based subsets and show how ranking quality varies between the candidate feature families.</p>
+            </section>
+            
+            <section class="slide">
+              <div class="meta">11 / 16 · Plot 5 of 10</div>
+              <h2>Feature Membership Map</h2>
+              <div class="image-wrap">
+                <img src="../plots/k_comparison_cvpr/05_feature_map.png" alt="Feature Membership Map">
+              </div>
+              <p>Binary feature-membership map for the compared subsets. This makes the selected descriptors transparent without interrupting the video with long tables.</p>
+            </section>
+            
+            <section class="slide">
+              <div class="meta">12 / 16 · Plot 6 of 10</div>
+              <h2>Summary Table</h2>
+              <div class="image-wrap">
+                <img src="../plots/k_comparison_cvpr/06_summary_table.png" alt="Summary Table">
+              </div>
+              <p>Compact summary of the key results used in the k-comparison study. This slide acts as a bridge from the main comparison plots to the reproduced figures that follow.</p>
+            </section>
+            
+            <section class="slide">
+              <div class="meta">13 / 16 · Plot 7 of 10</div>
+              <h2>Cross-Validation Stability</h2>
+              <div class="image-wrap">
+                <img src="../plots/k_comparison_cvpr/07_cv_stability_boxplot.png" alt="Cross-Validation Stability">
+              </div>
+              <p>Cross-validation stability across folds. The boxplot complements the bar chart by exposing variance rather than only central tendency.</p>
+            </section>
+            
+            <section class="slide">
+              <div class="meta">14 / 16 · Plot 8 of 10</div>
+              <h2>Qubit Scaling Comparison</h2>
+              <div class="image-wrap">
+                <img src="../plots/k_comparison_cvpr/08_qubit_scaling_bars.png" alt="Qubit Scaling Comparison">
+              </div>
+              <p>Performance trend as the selected subset size increases from k=2 to k=6. This plot connects the feature-selection story to the quantum subset size directly.</p>
+            </section>
+            
+            <section class="slide">
+              <div class="meta">15 / 16 · Plot 9 of 10</div>
+              <h2>PCA Manifold View</h2>
+              <div class="image-wrap">
+                <img src="../plots/k_comparison_cvpr/09_pca_manifolds.png" alt="PCA Manifold View">
+              </div>
+              <p>Low-dimensional manifold view of the selected feature representations. It helps visualize the separation structure learned by the compared subsets.</p>
+            </section>
+            
+            <section class="slide">
+              <div class="meta">16 / 16 · Plot 10 of 10</div>
+              <h2>Multi-Metric Radar Summary</h2>
+              <div class="image-wrap">
+                <img src="../plots/k_comparison_cvpr/10_radar.png" alt="Multi-Metric Radar Summary">
+              </div>
+              <p>Multi-metric summary at sigma = 0.15 using accuracy, F1-score, precision, recall, and ROC-AUC. The labels were rewritten for the demo to keep the presentation neutral and academically consistent.</p>
+            </section>
+            
+  </main>
+</body>
+</html>

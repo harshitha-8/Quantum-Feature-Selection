@@ -20,6 +20,7 @@ All numbers are written to results/tables/ and all plots to results/plots/.
 import warnings
 warnings.filterwarnings("ignore")
 
+import argparse
 import os, json
 import numpy as np
 import pandas as pd
@@ -27,6 +28,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.feature_selection import mutual_info_classif
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
@@ -39,16 +41,14 @@ from sklearn.metrics import (accuracy_score, f1_score, precision_score,
 HERE        = os.path.dirname(os.path.abspath(__file__))
 ROOT        = os.path.dirname(HERE)           # /Volumes/T9/QuantumFeatureSelection
 CSV_PATH    = os.path.join(ROOT, "icml_features_FULL.csv")
+ACTIVE_INPUT_PATH = CSV_PATH
 RESULTS_DIR = os.path.join(ROOT, "results")
 PLOTS_DIR   = os.path.join(RESULTS_DIR, "plots")
 TABLES_DIR  = os.path.join(RESULTS_DIR, "tables")
 LOGS_DIR    = os.path.join(RESULTS_DIR, "logs")
 
-for d in [PLOTS_DIR, TABLES_DIR, LOGS_DIR]:
-    os.makedirs(d, exist_ok=True)
-
 # ─── Subset definitions (same as in paper) ───────────────────────────────────
-SUBSETS = {
+DEFAULT_SUBSETS = {
     "QFS_k2": ["Std_ExG", "Mean_RBR"],
     "MI_k2":  ["Std_ExG", "Mean_ExG"],
     "QFS_k4": ["Std_ExG", "Mean_RBR", "Mean_B", "Correlation"],
@@ -56,6 +56,8 @@ SUBSETS = {
     "QFS_k6": ["Std_ExG", "Mean_RBR", "Mean_B", "Correlation", "Mean_ExG", "Mean_NGRDI"],
     "MI_k6":  ["Std_ExG", "Mean_ExG", "Mean_RBR", "Mean_B", "Correlation", "Mean_NGRDI"],
 }
+
+SUBSETS = dict(DEFAULT_SUBSETS)
 
 COLORS = {
     "QFS_k2": "#C62828",  # dark red
@@ -346,7 +348,7 @@ def plot_radar(noise_df, sigma=0.15):
     """Spider / Radar chart at one noise level showing all 5 metrics."""
     from sklearn.metrics import precision_score as prc_sc, recall_score as rec_sc
 
-    df_full = pd.read_csv(CSV_PATH).dropna()
+    df_full = pd.read_csv(ACTIVE_INPUT_PATH).dropna()
     groups  = df_full["Folder"].values
     y       = (df_full["Label"] == "Post_Defoliation").astype(int).values
     sgkf    = StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42)
@@ -463,14 +465,69 @@ def save_tables(cv_df, noise_df, aug_df):
     print(f"\n  Saved tables to {TABLES_DIR}/")
 
 
+def configure_output_dirs(out_subdir: str | None):
+    global PLOTS_DIR, TABLES_DIR, LOGS_DIR
+
+    if out_subdir:
+        PLOTS_DIR = os.path.join(RESULTS_DIR, out_subdir, "plots")
+        TABLES_DIR = os.path.join(RESULTS_DIR, out_subdir, "tables")
+        LOGS_DIR = os.path.join(RESULTS_DIR, out_subdir, "logs")
+
+    for directory in [PLOTS_DIR, TABLES_DIR, LOGS_DIR]:
+        os.makedirs(directory, exist_ok=True)
+
+
+def feature_columns(df: pd.DataFrame) -> list[str]:
+    return [c for c in df.columns if c not in ("Label", "Folder", "Filename")]
+
+
+def top_mi_features(df: pd.DataFrame, y: np.ndarray, k: int) -> list[str]:
+    cols = feature_columns(df)
+    scores = mutual_info_classif(df[cols].values, y, random_state=42)
+    ranked = [name for name, _ in sorted(zip(cols, scores), key=lambda item: item[1], reverse=True)]
+    return ranked[:k]
+
+
+def load_qfs_subsets(subsets_json_path: str) -> dict[str, list[str]]:
+    with open(subsets_json_path) as handle:
+        raw = json.load(handle)
+    return {f"QFS_k{k}": raw[f"k={k}"] for k in [2, 4, 6]}
+
+
+def configure_subsets(df: pd.DataFrame, y: np.ndarray, subsets_json_path: str | None):
+    global SUBSETS
+    if not subsets_json_path:
+        SUBSETS = dict(DEFAULT_SUBSETS)
+        return
+
+    qfs_subsets = load_qfs_subsets(subsets_json_path)
+    mi_subsets = {
+        f"MI_k{k}": top_mi_features(df, y, k)
+        for k in [2, 4, 6]
+    }
+    SUBSETS = {**qfs_subsets, **mi_subsets}
+
+
 # ─── Main ─────────────────────────────────────────────────────────────────────
 def main():
+    global ACTIVE_INPUT_PATH
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", default=CSV_PATH, help="Feature CSV to evaluate.")
+    parser.add_argument("--qfs-subsets-json", default=None, help="Optional JSON with keys k=2/k=4/k=6 for transferred QFS subsets.")
+    parser.add_argument("--out-subdir", default=None, help="Optional results subdirectory under results/.")
+    args = parser.parse_args()
+
+    configure_output_dirs(args.out_subdir)
+    ACTIVE_INPUT_PATH = args.input
+
     print("Loading dataset …")
-    df  = pd.read_csv(CSV_PATH).dropna()
+    df  = pd.read_csv(args.input).dropna()
     y   = (df["Label"] == "Post_Defoliation").astype(int).values
     grp = df["Folder"].values
 
-    feat_cols = [c for c in df.columns if c not in ("Label", "Folder", "Filename")]
+    configure_subsets(df, y, args.qfs_subsets_json)
+
+    feat_cols = feature_columns(df)
     X_df      = df[feat_cols]
 
     print(f"  {len(df)} samples | "

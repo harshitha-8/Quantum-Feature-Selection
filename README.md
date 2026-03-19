@@ -72,3 +72,30 @@ python scripts/evaluate_k_qubits.py
 ## Figures for Paper
 
 See [`results/README.md`](results/README.md) for a full index of all plots.
+
+## CVPR Demo Builder
+
+This repo now supports a CVPR-style demo package built around:
+
+- normal pre-defoliation and post-defoliation UAV images
+- generated heatmap visualizations for both states
+- the 10 core plots from `results/plots/k_comparison`
+
+Build the demo with:
+
+```bash
+python3 scripts/prepare_cvpr_demo_assets.py
+python3 scripts/build_cvpr_demo.py
+```
+
+Main repo files:
+
+- `cvpr_demo_manifest.json`
+- `scripts/prepare_cvpr_demo_assets.py`
+- `scripts/build_cvpr_demo.py`
+
+Generated outputs:
+
+- `results/cvpr_demo/index.html`
+- `results/cvpr_demo/storyboard.md`
+- `results/cvpr_demo/cvpr_demo.mp4`

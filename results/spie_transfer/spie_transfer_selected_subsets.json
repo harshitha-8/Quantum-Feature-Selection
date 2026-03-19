@@ -1,0 +1,20 @@
+{
+  "k=2": [
+    "ExG_pos_frac",
+    "Mean_B"
+  ],
+  "k=4": [
+    "Mean_ExG",
+    "Log_RBR",
+    "Mean_RBR",
+    "Mean_B"
+  ],
+  "k=6": [
+    "Mean_ExG",
+    "Std_ExG",
+    "ExG_pos_frac",
+    "Log_RBR",
+    "Cotton_Boll_Count",
+    "Contrast"
+  ]
+}
