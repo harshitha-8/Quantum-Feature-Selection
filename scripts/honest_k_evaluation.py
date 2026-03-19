@@ -44,8 +44,10 @@ HERE        = os.path.dirname(os.path.abspath(__file__))
 ROOT        = os.path.dirname(HERE)
 CSV_PATH    = os.path.join(ROOT, "icml_features_FULL.csv")
 PLOTS_DIR   = os.path.join(ROOT, "results", "plots")
+K_COMP_DIR  = os.path.join(PLOTS_DIR, "k_comparison")
 TABLES_DIR  = os.path.join(ROOT, "results", "tables")
 os.makedirs(PLOTS_DIR, exist_ok=True)
+os.makedirs(K_COMP_DIR, exist_ok=True)
 os.makedirs(TABLES_DIR, exist_ok=True)
 
 # ─── Honest subset definitions ────────────────────────────────────────────────
@@ -110,6 +112,12 @@ tr_idx, te_idx = train_test_split(np.arange(len(df)), test_size=0.30,
                                    stratify=y, random_state=42)
 print(f"  Total={len(df)} | Train={len(tr_idx)} Test={len(te_idx)}")
 print(f"  Test: Post={y[te_idx].sum()} Pre={(1-y[te_idx]).sum()}")
+
+folder_labels = df.groupby("Folder")["Label"].first().to_dict()
+PRE_FOLDERS = sorted([f for f, lab in folder_labels.items() if lab == "Pre_Defoliation"])
+POST_FOLDERS = sorted([f for f, lab in folder_labels.items() if lab == "Post_Defoliation"])
+FOLDER_PAIR_SPLITS = [(pre, post) for pre in PRE_FOLDERS for post in POST_FOLDERS]
+print(f"  Folder-pair holdouts for honest bar plot: {len(FOLDER_PAIR_SPLITS)}")
 
 # 5-fold CV on TRAINING set (for bar charts / stability)
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
@@ -199,6 +207,38 @@ def compute_all():
 
     return results
 
+
+def compute_folder_pair_stats(feats, sigma=0.15):
+    X = df[feats].values
+    folders = df["Folder"].values
+    clean_accs = []
+    noise_accs = []
+
+    for pre_folder, post_folder in FOLDER_PAIR_SPLITS:
+        test_mask = (folders == pre_folder) | (folders == post_folder)
+        train_mask = ~test_mask
+
+        clf = make_clf()
+        clf.fit(X[train_mask], y[train_mask])
+
+        X_test = X[test_mask]
+        y_test = y[test_mask]
+
+        clean_accs.append(accuracy_score(y_test, clf.predict(X_test)))
+
+        rng = np.random.RandomState(42)
+        X_noisy = X_test + rng.normal(0, sigma, X_test.shape)
+        noise_accs.append(accuracy_score(y_test, clf.predict(X_noisy)))
+
+    return {
+        "clean_mean": float(np.mean(clean_accs)),
+        "clean_std": float(np.std(clean_accs)),
+        "noise_mean": float(np.mean(noise_accs)),
+        "noise_std": float(np.std(noise_accs)),
+        "n_splits": len(FOLDER_PAIR_SPLITS),
+        "sigma": sigma,
+    }
+
 # ─── Matplotlib style ─────────────────────────────────────────────────────────
 plt.rcParams.update({
     "font.family": "serif", "font.size": 11,
@@ -209,60 +249,53 @@ SPINE_OFF = lambda ax: [ax.spines[s].set_visible(False) for s in ["top","right"]
 
 # ─── PLOT 1: Honest k-scaling bar chart (Clean CV vs Noise) ────────────────────
 def plot1_cv_bars(res):
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5.5), sharey=True, facecolor="white")
-    tracks = {
-        "Non-Trivial Scaling\n(No ExG)":  ["NonExG_k2","NonExG_k4","NonExG_k6"],
-        "QFS Quantum-Selected":          ["QFS_k2","QFS_k4","QFS_k6"],
-        "Classical MI Baselines":        ["MI_k2","MI_k4","MI_k6"],
-    }
-    
-    # We will plot Clean CV vs Noise (sigma=0.15, which is index 3 in sigmas)
-    SIGMA_IDX = 3
-    
-    for ax, (title, names) in zip(axes, tracks.items()):
-        ks     = np.array([res[n]["k"] for n in names])
-        means  = np.array([res[n]["CV_mean"]*100 for n in names])
-        stds   = np.array([res[n]["CV_std"]*100 for n in names])
-        noises = np.array([res[n]["noise_accs"][SIGMA_IDX]*100 for n in names])
-        colors = [COLORS[n] for n in names]
-        
-        w = 0.4
-        # Clean CV Bar
-        b1 = ax.bar(ks - w/2, means, color=colors, edgecolor="black",
-                    linewidth=0.9, width=w, yerr=stds, capsize=4, error_kw=dict(lw=1.2),
-                    label="Clean CV")
-        # Noise-Stressed Bar
-        b2 = ax.bar(ks + w/2, noises, color=colors, edgecolor="black",
-                    linewidth=0.9, width=w, alpha=0.45, hatch="///",
-                    label="Noise (σ=0.15)")
-                    
-        # Annotate Clean CV
-        for bar, m in zip(b1, means):
-            if m > 99.0: # If it's trivial 100%, put the text slightly inside
-                ax.text(bar.get_x() + bar.get_width()/2, 101, "100%", 
-                        ha="center", va="bottom", fontsize=8.5, fontweight="bold", color="#B71C1C")
-            else:
-                ax.text(bar.get_x() + bar.get_width()/2, bar.get_height()+1.5, f"{m:.1f}%", 
-                        ha="center", va="bottom", fontsize=8.5, fontweight="bold")
-                        
-        # Annotate Noise accuracy
-        for bar, n in zip(b2, noises):
-            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height()+1, f"{n:.1f}%", 
-                    ha="center", va="bottom", fontsize=8.5, color="#424242")
-                    
-        ax.set_xticks(ks); ax.set_xticklabels([f"k={k}" for k in ks])
-        ax.set_title(title, fontweight="bold")
-        ax.set_ylim(60, 108)
-        if title.startswith("Non-Trivial"):
-            ax.legend(loc="upper left", fontsize=9)
-        ax.grid(axis="y", ls="--", alpha=0.5); SPINE_OFF(ax)
-        
-    axes[0].set_ylabel("Accuracy (%)")
-    fig.suptitle("Scaling Robustness: Clean CV vs. Noise-Stressed Evaluating (σ=0.15)\n"
-                 "Breaks the 'Trivial 100%' illusion by showing true degradation",
-                 fontsize=14, fontweight="bold", y=1.03)
+    names = ["NonExG_k2", "NonExG_k4", "NonExG_k6"]
+    strict = {name: compute_folder_pair_stats(HONEST_SUBSETS[name], sigma=0.15) for name in names}
+
+    fig, ax = plt.subplots(figsize=(11.5, 6.5), facecolor="white")
+    ks = np.array([res[n]["k"] for n in names])
+    clean_means = np.array([strict[n]["clean_mean"] * 100 for n in names])
+    clean_stds = np.array([strict[n]["clean_std"] * 100 for n in names])
+    noise_means = np.array([strict[n]["noise_mean"] * 100 for n in names])
+    noise_stds = np.array([strict[n]["noise_std"] * 100 for n in names])
+    colors = [COLORS[n] for n in names]
+
+    w = 0.34
+    clean_bars = ax.bar(
+        ks - w / 2, clean_means, width=w, color=colors, edgecolor="black",
+        linewidth=1.0, yerr=clean_stds, capsize=5, error_kw=dict(lw=1.2),
+        label="Folder-held-out clean accuracy"
+    )
+    noise_bars = ax.bar(
+        ks + w / 2, noise_means, width=w, color=colors, edgecolor="black",
+        linewidth=1.0, alpha=0.45, hatch="///", yerr=noise_stds, capsize=5,
+        error_kw=dict(lw=1.2), label="Folder-held-out noise accuracy (σ=0.15)"
+    )
+
+    for bar, val in zip(clean_bars, clean_means):
+        ax.text(bar.get_x() + bar.get_width() / 2, val + 1.2, f"{val:.1f}%",
+                ha="center", va="bottom", fontsize=9, fontweight="bold")
+    for bar, val in zip(noise_bars, noise_means):
+        ax.text(bar.get_x() + bar.get_width() / 2, val + 1.2, f"{val:.1f}%",
+                ha="center", va="bottom", fontsize=9, color="#424242")
+
+    ax.set_xticks(ks)
+    ax.set_xticklabels([f"k={k}" for k in ks], fontsize=12)
+    ax.set_ylabel("Accuracy (%)")
+    ax.set_ylim(35, 108)
+    ax.set_title("Non-ExG Scaling Under a Stricter Folder-Held-Out Protocol",
+                 fontweight="bold", pad=10)
+    ax.grid(axis="y", ls="--", alpha=0.5)
+    SPINE_OFF(ax)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.02), ncol=2,
+              fontsize=9.5, frameon=True)
+
+    fig.suptitle(
+        "Feature Scaling Performance Under Folder-Held-Out Evaluation",
+        fontsize=15, fontweight="bold", y=0.98
+    )
     plt.tight_layout()
-    path = os.path.join(PLOTS_DIR, "k_comparison", "honest_01_cv_bars.png")
+    path = os.path.join(K_COMP_DIR, "honest_01_cv_bars.png")
     plt.savefig(path, dpi=300, bbox_inches="tight"); plt.close()
     print(f"  Saved: {path}")
 
