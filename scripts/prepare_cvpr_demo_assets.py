@@ -13,7 +13,7 @@ POST_IMAGE = Path("/Volumes/T9/ICML/205_Post_Def_rgb/DJI_20250929124641_0175_D.J
 PANEL_GAP = 24
 FIGURE_TITLE_BAND = 100
 FIGURE_CAPTION_BAND = 120
-MAX_SOURCE_DIM = 5200
+MAX_SOURCE_DIM = 2560
 DETECT_MAX_DIM = 2560
 
 
@@ -147,12 +147,7 @@ def cotton_candidate_boxes(img_rgb: np.ndarray, label: str) -> list[tuple[int, i
 
     weighted = np.clip(weighted, 0, 255).astype(np.uint8)
     otsu_val, _ = cv2.threshold(weighted, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    
-    if label == "Post_Defoliation":
-        thresh_val = max(5, min(30, int(otsu_val * 0.15))) 
-    else:
-        thresh_val = max(10, min(50, int(otsu_val * 0.45))) 
-        
+    thresh_val = max(10, min(50, int(otsu_val * 0.45))) 
     _, boll_mask = cv2.threshold(weighted, thresh_val, 255, cv2.THRESH_BINARY)
     boll_mask = cv2.morphologyEx(boll_mask, cv2.MORPH_OPEN, se_small, iterations=1)
     contours, _ = cv2.findContours(boll_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -162,21 +157,11 @@ def cotton_candidate_boxes(img_rgb: np.ndarray, label: str) -> list[tuple[int, i
         x_pos, y_pos, width, height = cv2.boundingRect(contour)
         contour_area = cv2.contourArea(contour)
         aspect = max(width, height) / (min(width, height) + 1e-6)
-        
-        if label == "Post_Defoliation":
-            if aspect > 4.5: continue
-        else:
-            if aspect > 2.8: continue
-            
+        if aspect > 2.8:  continue
         bbox_area = width * height
         if bbox_area <= 0: continue
         fill_ratio = contour_area / float(bbox_area)
-        
-        if label == "Post_Defoliation":
-            if fill_ratio < 0.02: continue
-        else:
-            if fill_ratio < 0.12: continue
-            
+        if fill_ratio < 0.12: continue
         if bbox_area > 0.0024 * (dw * dh): continue
         if width > 0.09 * dw or height > 0.09 * dh: continue
         
@@ -188,14 +173,9 @@ def cotton_candidate_boxes(img_rgb: np.ndarray, label: str) -> list[tuple[int, i
         region_gray = gray.astype(np.float32)[pixels] / 255.0
         
         if len(region_s) == 0: continue
-        
-        if label == "Pre_Defoliation":
-            if float(np.mean(region_s)) > 0.75: continue
-            if float(np.mean(region_gray)) < 0.10: continue
-            if float(np.mean(region_exg)) > 0.85: continue
-        else:
-            if float(np.mean(region_gray)) < 0.02: continue
-            
+        if float(np.mean(region_s)) > 0.75 and label == "Pre_Defoliation": continue
+        if float(np.mean(region_gray)) < 0.10: continue
+        if label == "Pre_Defoliation" and float(np.mean(region_exg)) > 0.85: continue
         candidate_boxes.append((x_pos, y_pos, width, height, contour_area))
 
     return [(x, y, w, h) for x, y, w, h, _ in candidate_boxes]
@@ -245,8 +225,8 @@ def run_cotton_visual_pipeline(image: Image.Image, label: str) -> tuple[Image.Im
     arr = np.asarray(image.convert("RGB"))
     raw_boxes = cotton_candidate_boxes(arr, label)
     max_boxes = 28000 
-    gap = 0 if label == "Post_Defoliation" else 2
-    iou_t = 0.50 if label == "Post_Defoliation" else 0.35
+    gap = 2
+    iou_t = 0.35
     boxes = select_salient_boxes(arr, raw_boxes, label, max_boxes=max_boxes, min_center_gap=gap, iou_thresh=iou_t)
     heatmap_view = build_cotton_heatmap(arr, boxes)
     detection_view = draw_detection_overlay(arr, boxes)
