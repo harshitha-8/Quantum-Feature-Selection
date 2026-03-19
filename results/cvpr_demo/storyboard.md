@@ -26,17 +26,17 @@ Full post-defoliation frame from the ICML UAV dataset. After defoliation, expose
 
 Cotton-only response map generated from cotton-boll candidate detections. Highlighted regions correspond to detected cotton structures and reveal the denser exposed cotton distribution after defoliation.
 
-## Slide 5: Pre-Defoliation Triptych
+## Slide 5: Pre-defoliation scene analysis
 
-![Pre-Defoliation Triptych](../cvpr_demo_assets/pre_triptych.png)
+![Pre-defoliation scene analysis](../cvpr_demo_assets/pre_triptych.png)
 
-Triptych view for the pre-defoliation scene: the full UAV image, the cotton-only response map, and the refined detection overlay with compact dark-green bounding boxes for detected cotton bolls.
+Pre-defoliation scene showing the original UAV image, the model-derived cotton response map, and the refined detection overlay for candidate cotton regions.
 
-## Slide 6: Post-Defoliation Triptych
+## Slide 6: Post-defoliation scene analysis
 
-![Post-Defoliation Triptych](../cvpr_demo_assets/post_triptych.png)
+![Post-defoliation scene analysis](../cvpr_demo_assets/post_triptych.png)
 
-Triptych view for the post-defoliation scene: the full UAV image, the cotton-only response map, and the refined detection overlay with compact dark-green bounding boxes for detected cotton bolls.
+Post-defoliation scene showing the original UAV image, the model-derived cotton response map, and the refined detection overlay for candidate cotton regions.
 
 ## Slide 7: Cross-Validation Bars
 

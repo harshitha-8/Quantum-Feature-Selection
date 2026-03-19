@@ -27,16 +27,16 @@
       "source_label": "Detection-derived heatmap"
     },
     {
-      "title": "Pre-Defoliation Triptych",
+      "title": "Pre-defoliation scene analysis",
       "image": "results/cvpr_demo_assets/pre_triptych.png",
-      "caption": "Triptych view for the pre-defoliation scene: the full UAV image, the cotton-only response map, and the refined detection overlay with compact dark-green bounding boxes for detected cotton bolls.",
-      "source_label": "Detection visualization"
+      "caption": "Pre-defoliation scene showing the original UAV image, the model-derived cotton response map, and the refined detection overlay for candidate cotton regions.",
+      "source_label": "Three-panel figure"
     },
     {
-      "title": "Post-Defoliation Triptych",
+      "title": "Post-defoliation scene analysis",
       "image": "results/cvpr_demo_assets/post_triptych.png",
-      "caption": "Triptych view for the post-defoliation scene: the full UAV image, the cotton-only response map, and the refined detection overlay with compact dark-green bounding boxes for detected cotton bolls.",
-      "source_label": "Detection visualization"
+      "caption": "Post-defoliation scene showing the original UAV image, the model-derived cotton response map, and the refined detection overlay for candidate cotton regions.",
+      "source_label": "Three-panel figure"
     },
     {
       "title": "Cross-Validation Bars",
