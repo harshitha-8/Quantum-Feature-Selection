@@ -147,7 +147,7 @@ def cotton_candidate_boxes(img_rgb: np.ndarray, label: str) -> list[tuple[int, i
 
     weighted = np.clip(weighted, 0, 255).astype(np.uint8)
     otsu_val, _ = cv2.threshold(weighted, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    thresh_val = max(15, min(80, int(otsu_val * 0.70))) 
+    thresh_val = max(10, min(50, int(otsu_val * 0.45))) 
     _, boll_mask = cv2.threshold(weighted, thresh_val, 255, cv2.THRESH_BINARY)
     boll_mask = cv2.morphologyEx(boll_mask, cv2.MORPH_OPEN, se_small, iterations=1)
     contours, _ = cv2.findContours(boll_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -172,7 +172,7 @@ def cotton_candidate_boxes(img_rgb: np.ndarray, label: str) -> list[tuple[int, i
         region_gray = gray.astype(np.float32)[pixels] / 255.0
         if len(region_s) == 0: continue
         if float(np.mean(region_s)) > 0.75 and label == "Pre_Defoliation": continue
-        if float(np.mean(region_gray)) < 0.15: continue
+        if float(np.mean(region_gray)) < 0.10: continue
         if label == "Pre_Defoliation" and float(np.mean(region_exg)) > 0.85: continue
         candidate_boxes.append((x_pos, y_pos, width, height, contour_area))
 
