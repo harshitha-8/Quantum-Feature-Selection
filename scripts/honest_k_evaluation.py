@@ -207,13 +207,13 @@ plt.rcParams.update({
 })
 SPINE_OFF = lambda ax: [ax.spines[s].set_visible(False) for s in ["top","right"]]
 
-# ─── PLOT 1: Honest k-scaling bar chart (Clean CV vs Noise) ────────────────────
+# ─── PLOT 1: k-scaling bar chart (Clean CV vs Noise) ──────────────────────────
 def plot1_cv_bars(res):
     fig, axes = plt.subplots(1, 3, figsize=(15, 5.5), sharey=True, facecolor="white")
     tracks = {
-        "Non-Trivial Scaling\n(No ExG)":  ["NonExG_k2","NonExG_k4","NonExG_k6"],
-        "QFS Quantum-Selected":          ["QFS_k2","QFS_k4","QFS_k6"],
-        "Classical MI Baselines":        ["MI_k2","MI_k4","MI_k6"],
+        "Feature-Scaled Baselines\n(No ExG anchor)":  ["NonExG_k2","NonExG_k4","NonExG_k6"],
+        "QFS-Selected Subsets":          ["QFS_k2","QFS_k4","QFS_k6"],
+        "Mutual-Information Baselines":  ["MI_k2","MI_k4","MI_k6"],
     }
     
     # We will plot Clean CV vs Noise (sigma=0.15, which is index 3 in sigmas)
@@ -253,20 +253,20 @@ def plot1_cv_bars(res):
         ax.set_xticks(ks); ax.set_xticklabels([f"k={k}" for k in ks])
         ax.set_title(title, fontweight="bold")
         ax.set_ylim(60, 108)
-        if title.startswith("Non-Trivial"):
+        if title.startswith("Feature-Scaled"):
             ax.legend(loc="upper left", fontsize=9)
         ax.grid(axis="y", ls="--", alpha=0.5); SPINE_OFF(ax)
         
     axes[0].set_ylabel("Accuracy (%)")
-    fig.suptitle("Scaling Robustness: Clean CV vs. Noise-Stressed Evaluating (σ=0.15)\n"
-                 "Breaks the 'Trivial 100%' illusion by showing true degradation",
+    fig.suptitle("Cross-Validation and Noise-Stressed Performance (σ=0.15)\n"
+                 "Comparison across feature-scaled, QFS-selected, and MI-based subsets",
                  fontsize=14, fontweight="bold", y=1.03)
     plt.tight_layout()
     path = os.path.join(PLOTS_DIR, "k_comparison", "honest_01_cv_bars.png")
     plt.savefig(path, dpi=300, bbox_inches="tight"); plt.close()
     print(f"  Saved: {path}")
 
-# ─── PLOT 2: Noise robustness – non-trivial subsets only ─────────────────────
+# ─── PLOT 2: Noise robustness across feature families ────────────────────────
 def plot2_noise(res):
     fig, ax = plt.subplots(figsize=(10, 6), facecolor="white")
     key_sets = ["NonExG_k2","NonExG_k4","NonExG_k6",
@@ -279,7 +279,7 @@ def plot2_noise(res):
         ls = "-" if "NonExG" in name else ("--" if "QFS" in name else ":")
         lw = 2.5 if name.endswith("k6") else (2.0 if name.endswith("k4") else 1.5)
         k  = name.split("k")[1]
-        track = ("Non-Trivial" if "NonExG" in name else
+        track = ("Feature-Scaled" if "NonExG" in name else
                  ("QFS" if "QFS" in name else "MI"))
         ax.plot(sigmas, [a*100 for a in r["noise_accs"]],
                 color=COLORS[name], ls=ls, lw=lw,
@@ -291,8 +291,8 @@ def plot2_noise(res):
             color="#BF360C", fontsize=9.5, fontweight="bold")
     ax.set_xlabel(r"Gaussian noise $\sigma$ applied to test features")
     ax.set_ylabel("Test Accuracy (%)")
-    ax.set_title("Noise Robustness Across k=2, 4, 6\n"
-                 "(Orange = Non-Trivial; Blue = QFS; Green = MI)",
+    ax.set_title("Noise Robustness Across k=2, 4, and 6\n"
+                 "(Orange = feature-scaled; Blue = QFS; Green = MI)",
                  fontweight="bold")
     ax.set_ylim(40, 103)
     
@@ -313,11 +313,12 @@ def plot3_aug_heatmap(res):
     augs = ["Acc_clean","Acc_Fog","Acc_Glare","Acc_Shadow"]
     col_labels = ["Clean","Fog","Glare","Shadow"]
     data = np.array([[res[n][a]*100 for a in augs] for n in key_sets])
+    row_labels = ["FS k=2","FS k=4","FS k=6","QFS k=2","QFS k=4","QFS k=6","MI k=2","MI k=4","MI k=6"]
 
     fig, ax = plt.subplots(figsize=(9, 6), facecolor="white")
     im = ax.imshow(data, cmap="RdYlGn", vmin=50, vmax=100, aspect="auto")
     ax.set_xticks(range(len(col_labels))); ax.set_xticklabels(col_labels, fontsize=12)
-    ax.set_yticks(range(len(key_sets))); ax.set_yticklabels(key_sets, fontsize=11)
+    ax.set_yticks(range(len(key_sets))); ax.set_yticklabels(row_labels, fontsize=11)
     for i in range(len(key_sets)):
         for j in range(len(col_labels)):
             ax.text(j, i, f"{data[i,j]:.1f}",
@@ -327,20 +328,20 @@ def plot3_aug_heatmap(res):
         ax.axhline(sep, color="white", lw=3)
     plt.colorbar(im, ax=ax, label="Accuracy (%)")
     ax.set_title("Augmentation Stress Test: Accuracy (%) per Condition\n"
-                 "Red=Fails, Green=Robust — showing honest scaling benefit",
+                 "Clean, fog, glare, and shadow evaluation across compared subsets",
                  fontweight="bold", pad=12)
     plt.tight_layout()
     path = os.path.join(PLOTS_DIR, "honest_03_aug_heatmap.png")
     plt.savefig(path, dpi=300, bbox_inches="tight"); plt.close()
     print(f"  Saved: {path}")
 
-# ─── PLOT 4: ROC grid (non-trivial + QFS + MI per k) ────────────────────────
+# ─── PLOT 4: ROC grid across feature families and k ──────────────────────────
 def plot4_roc_grid(res):
     k_vals = [2, 4, 6]
     fig, axes = plt.subplots(2, 3, figsize=(15, 9), facecolor="white")
     for col, k in enumerate(k_vals):
         for ax, curve_type in zip([axes[0, col], axes[1, col]], ["ROC", "PR"]):
-            for track, prefix in [("Non-Trivial","NonExG"), ("QFS","QFS"), ("MI","MI")]:
+            for track, prefix in [("Feature-Scaled","NonExG"), ("QFS","QFS"), ("MI","MI")]:
                 name = f"{prefix}_k{k}"
                 r = res[name]
                 if curve_type == "ROC":
@@ -370,6 +371,7 @@ def plot5_membership(res):
     key_sets = ["NonExG_k2","NonExG_k4","NonExG_k6",
                 "QFS_k2","QFS_k4","QFS_k6",
                 "MI_k2","MI_k4","MI_k6"]
+    row_labels = ["FS k=2","FS k=4","FS k=6","QFS k=2","QFS k=4","QFS k=6","MI k=2","MI k=4","MI k=6"]
     all_feats = sorted({f for n in key_sets for f in HONEST_SUBSETS[n]})
     data = np.array([[1 if f in HONEST_SUBSETS[n] else 0
                       for f in all_feats] for n in key_sets], dtype=float)
@@ -379,7 +381,7 @@ def plot5_membership(res):
     ax.set_xticks(range(len(all_feats)))
     ax.set_xticklabels(all_feats, rotation=35, ha="right", fontsize=11)
     ax.set_yticks(range(len(key_sets)))
-    ax.set_yticklabels(key_sets, fontsize=11)
+    ax.set_yticklabels(row_labels, fontsize=11)
     for i in range(len(key_sets)):
         for j in range(len(all_feats)):
             ax.text(j, i, "✓" if data[i,j] else "", ha="center", va="center",
@@ -399,6 +401,7 @@ def plot6_summary_table(res):
                 "QFS_k2","QFS_k4","QFS_k6",
                 "MI_k2","MI_k4","MI_k6",
                 "ExG_trivial_k1","ExG_trivial_k2"]
+    row_labels = ["FS k=2","FS k=4","FS k=6","QFS k=2","QFS k=4","QFS k=6","MI k=2","MI k=4","MI k=6","ExG k=1","ExG k=2"]
     cols = ["Clean Acc","CV Acc","AUC","Fog Acc","Shadow Acc"]
     def row_vals(n):
         r = res[n]
@@ -410,7 +413,7 @@ def plot6_summary_table(res):
     ax.axis("off")
     tbl = ax.table(
         cellText=[[f"{v:.1f}" for v in row] for row in data],
-        rowLabels=key_sets,
+        rowLabels=row_labels,
         colLabels=cols,
         cellLoc="center", loc="center",
     )

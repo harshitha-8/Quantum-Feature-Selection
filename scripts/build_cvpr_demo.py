@@ -12,14 +12,14 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_MANIFEST = ROOT / "cvpr_demo_manifest.json"
 DEFAULT_OUTPUT_DIR = ROOT / "results" / "cvpr_demo"
-VIDEO_SIZE = (1920, 1080)
-CARD_MARGIN = 72
-CAPTION_HEIGHT = 228
-TITLE_COLOR = "#f8fbff"
-TEXT_COLOR = "#d6e5f5"
-ACCENT_COLOR = "#72d0ff"
-BG_TOP = (11, 22, 40)
-BG_BOTTOM = (26, 59, 93)
+VIDEO_SIZE = (2560, 1440)
+CARD_MARGIN = 80
+CAPTION_HEIGHT = 268
+TITLE_COLOR = "#111111"
+TEXT_COLOR = "#2c3640"
+ACCENT_COLOR = "#5c6670"
+BG_COLOR = "#ffffff"
+LINE_COLOR = "#d2d8df"
 
 
 def parse_args() -> argparse.Namespace:
@@ -85,28 +85,18 @@ def resize_with_padding(image: Image.Image, target_width: int, target_height: in
     return canvas
 
 
-def make_gradient_background(size: tuple[int, int]) -> Image.Image:
-    width, height = size
-    bg = Image.new("RGB", size, BG_TOP)
-    draw = ImageDraw.Draw(bg)
-    for y in range(height):
-        ratio = y / max(1, height - 1)
-        color = tuple(
-            int(BG_TOP[idx] * (1 - ratio) + BG_BOTTOM[idx] * ratio)
-            for idx in range(3)
-        )
-        draw.line([(0, y), (width, y)], fill=color)
-    return bg
+def make_background(size: tuple[int, int]) -> Image.Image:
+    return Image.new("RGB", size, BG_COLOR)
 
 
 def render_slide(slide: dict[str, Any], index: int, total: int, output_path: Path) -> None:
     width, height = VIDEO_SIZE
-    background = make_gradient_background(VIDEO_SIZE)
+    background = make_background(VIDEO_SIZE)
     draw = ImageDraw.Draw(background)
 
-    title_font = load_font(44, bold=True)
-    body_font = load_font(29)
-    meta_font = load_font(24)
+    title_font = load_font(48, bold=True)
+    body_font = load_font(30)
+    meta_font = load_font(23)
 
     image_box_width = width - (CARD_MARGIN * 2)
     image_box_height = height - CAPTION_HEIGHT - (CARD_MARGIN * 2) - 24
@@ -117,23 +107,22 @@ def render_slide(slide: dict[str, Any], index: int, total: int, output_path: Pat
     panel = resize_with_padding(Image.open(image_path), image_box_width, image_box_height)
     background.paste(panel, (CARD_MARGIN, CARD_MARGIN))
 
-    caption_top = CARD_MARGIN + image_box_height + 24
-    draw.rounded_rectangle(
-        [(CARD_MARGIN, caption_top), (width - CARD_MARGIN, height - CARD_MARGIN)],
-        radius=30,
-        fill="#0d1827",
-        outline="#1c3655",
+    draw.rectangle(
+        [(CARD_MARGIN - 1, CARD_MARGIN - 1), (width - CARD_MARGIN + 1, CARD_MARGIN + image_box_height + 1)],
+        outline=LINE_COLOR,
         width=2,
     )
 
-    draw.text((CARD_MARGIN + 28, caption_top + 28), slide["title"], font=title_font, fill=TITLE_COLOR)
-    body_y = caption_top + 90
+    caption_top = CARD_MARGIN + image_box_height + 34
+    draw.line((CARD_MARGIN, caption_top - 16, width - CARD_MARGIN, caption_top - 16), fill=LINE_COLOR, width=2)
+    draw.text((CARD_MARGIN, caption_top + 8), slide["title"], font=title_font, fill=TITLE_COLOR)
+    body_y = caption_top + 86
     for line in wrap_text(draw, slide["caption"], body_font, image_box_width - 56)[:4]:
-        draw.text((CARD_MARGIN + 28, body_y), line, font=body_font, fill=TEXT_COLOR)
-        body_y += 38
+        draw.text((CARD_MARGIN, body_y), line, font=body_font, fill=TEXT_COLOR)
+        body_y += 40
 
-    footer = f"{index}/{total}  |  {slide.get('source_label', 'Project figure')}"
-    draw.text((CARD_MARGIN + 28, height - CARD_MARGIN - 42), footer, font=meta_font, fill=ACCENT_COLOR)
+    footer = f"Slide {index}/{total}   |   {slide.get('source_label', 'Project figure')}"
+    draw.text((CARD_MARGIN, height - CARD_MARGIN - 32), footer, font=meta_font, fill=ACCENT_COLOR)
     background.save(output_path, quality=95)
 
 
@@ -144,13 +133,14 @@ def html_escape(value: str) -> str:
 def build_html(manifest: dict[str, Any], output_path: Path) -> None:
     slides_html = []
     for idx, slide in enumerate(manifest["slides"], start=1):
+        rel_image = Path(slide["image"]).relative_to("results")
         slides_html.append(
             f"""
             <section class="slide">
               <div class="meta">{idx} / {len(manifest["slides"])} · {html_escape(slide.get("source_label", "Project figure"))}</div>
               <h2>{html_escape(slide["title"])}</h2>
               <div class="image-wrap">
-                <img src="../{html_escape(slide["image"])}" alt="{html_escape(slide["title"])}">
+                <img src="../{html_escape(str(rel_image))}" alt="{html_escape(slide["title"])}">
               </div>
               <p>{html_escape(slide["caption"])}</p>
             </section>
@@ -164,27 +154,27 @@ def build_html(manifest: dict[str, Any], output_path: Path) -> None:
   <title>{html_escape(manifest.get("title", "CVPR Demo"))}</title>
   <style>
     :root {{
-      --bg: #08111d;
-      --panel: rgba(13, 24, 39, 0.92);
-      --line: rgba(114, 208, 255, 0.16);
-      --text: #edf6ff;
-      --muted: #9db7d4;
-      --accent: #72d0ff;
+      --bg: #ffffff;
+      --panel: #ffffff;
+      --line: #d2d8df;
+      --text: #111111;
+      --muted: #5c6670;
+      --accent: #27313b;
     }}
     body {{
       margin: 0;
-      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      font-family: Georgia, "Times New Roman", serif;
       color: var(--text);
-      background: radial-gradient(circle at top left, rgba(114, 208, 255, 0.15), transparent 30%), linear-gradient(180deg, #0b1627 0%, #0e2540 100%);
+      background: var(--bg);
     }}
     main {{ max-width: 1200px; margin: 0 auto; padding: 40px 24px 72px; }}
     h1 {{ font-size: 2.6rem; margin-bottom: 10px; }}
     .intro {{ color: var(--muted); line-height: 1.7; max-width: 900px; margin-bottom: 30px; }}
-    .slide {{ background: var(--panel); border: 1px solid var(--line); border-radius: 28px; padding: 24px; margin-bottom: 28px; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22); }}
+    .slide {{ background: var(--panel); border: 1px solid var(--line); padding: 24px; margin-bottom: 28px; }}
     .meta {{ color: var(--accent); font-size: 0.95rem; margin-bottom: 10px; }}
-    .image-wrap {{ background: #050b14; border-radius: 22px; padding: 14px; margin: 18px 0; }}
-    img {{ display: block; width: 100%; border-radius: 14px; }}
-    p {{ line-height: 1.75; color: #d9e8f8; font-size: 1.06rem; }}
+    .image-wrap {{ background: #ffffff; padding: 14px; margin: 18px 0; border: 1px solid var(--line); }}
+    img {{ display: block; width: 100%; }}
+    p {{ line-height: 1.75; color: #2c3640; font-size: 1.06rem; }}
   </style>
 </head>
 <body>
@@ -202,11 +192,12 @@ def build_html(manifest: dict[str, Any], output_path: Path) -> None:
 def build_markdown(manifest: dict[str, Any], output_path: Path) -> None:
     lines = [f"# {manifest.get('title', 'CVPR Demo')}", "", manifest.get("description", ""), ""]
     for idx, slide in enumerate(manifest["slides"], start=1):
+        rel_image = Path(slide["image"]).relative_to("results")
         lines.extend(
             [
                 f"## Slide {idx}: {slide['title']}",
                 "",
-                f"![{slide['title']}](../{slide['image']})",
+                f"![{slide['title']}](../{rel_image})",
                 "",
                 slide["caption"],
                 "",

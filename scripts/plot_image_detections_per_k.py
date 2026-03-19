@@ -20,12 +20,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from skimage.feature import graycomatrix, graycoprops
 from skimage.measure import shannon_entropy
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
 
 
 HERE = Path(__file__).resolve().parent
@@ -38,6 +34,10 @@ DEFAULT_POST = Path("/Volumes/T9/ICML/205_Post_Def_rgb/DJI_20250929124505_0127_D
 
 
 def make_clf() -> Pipeline:
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.svm import SVC
+
     return Pipeline(
         [
             ("scaler", StandardScaler()),
@@ -92,9 +92,19 @@ def extract_features(img_bgr: np.ndarray, label_for_count: str) -> dict[str, flo
     return features
 
 
-def detect_cotton_bolls(img_rgb: np.ndarray, label: str) -> tuple[np.ndarray, int, int]:
+def detect_cotton_bolls_detailed(
+    img_rgb: np.ndarray,
+    label: str,
+    *,
+    detect_maxdim: int = 1280,
+    draw_boxes: bool = True,
+    draw_numbers: bool = False,
+    draw_badge: bool = True,
+    box_color: tuple[int, int, int] = (0, 120, 70),
+    thickness: int | None = None,
+    shrink_factor: float = 0.82,
+) -> tuple[np.ndarray, int, int, list[tuple[int, int, int, int]]]:
     h, w = img_rgb.shape[:2]
-    detect_maxdim = 640
     scale = detect_maxdim / max(h, w)
     if scale < 1.0:
         dw, dh = int(w * scale), int(h * scale)
@@ -178,25 +188,32 @@ def detect_cotton_bolls(img_rgb: np.ndarray, label: str) -> tuple[np.ndarray, in
     visible_box_count = len(filtered_boxes)
 
     annotated = img_rgb.copy()
-    box_color = (0, 255, 170)
     text_color = (255, 255, 255)
-    thickness = max(2, int(min(h, w) * 0.001))
+    draw_thickness = thickness if thickness is not None else max(2, int(min(h, w) * 0.0014))
     inv_scale = 1.0 / scale
 
-    # Draw explicit bounding boxes like the reference output.
-    # We number the raw detected candidates; the displayed count still follows
-    # the SPIE pre/post counting rule.
+    full_res_boxes: list[tuple[int, int, int, int]] = []
     for index, (x_pos, y_pos, width, height) in enumerate(filtered_boxes, start=1):
         x0 = int(x_pos * inv_scale)
         y0 = int(y_pos * inv_scale)
         w0 = max(1, int(width * inv_scale))
         h0 = max(1, int(height * inv_scale))
-        cv2.rectangle(annotated, (x0, y0), (x0 + w0, y0 + h0), box_color, thickness)
-        if index <= 4000:
+        cx = x0 + w0 // 2
+        cy = y0 + h0 // 2
+        shrunk_w = max(2, int(w0 * shrink_factor))
+        shrunk_h = max(2, int(h0 * shrink_factor))
+        sx0 = max(0, cx - shrunk_w // 2)
+        sy0 = max(0, cy - shrunk_h // 2)
+        sx1 = min(w - 1, sx0 + shrunk_w)
+        sy1 = min(h - 1, sy0 + shrunk_h)
+        full_res_boxes.append((sx0, sy0, max(1, sx1 - sx0), max(1, sy1 - sy0)))
+        if draw_boxes:
+            cv2.rectangle(annotated, (sx0, sy0), (sx1, sy1), box_color, draw_thickness)
+        if draw_numbers and index <= 4000:
             cv2.putText(
                 annotated,
                 str(index),
-                (x0 + 2, max(12, y0 + 11)),
+                (sx0 + 2, max(12, sy0 + 11)),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 max(0.22, min(h, w) * 0.00018),
                 text_color,
@@ -204,75 +221,30 @@ def detect_cotton_bolls(img_rgb: np.ndarray, label: str) -> tuple[np.ndarray, in
                 cv2.LINE_AA,
             )
 
-    badge_h = max(28, int(min(h, w) * 0.045))
-    badge_w = max(200, int(min(h, w) * 0.28))
-    cv2.rectangle(annotated, (0, 0), (badge_w, badge_h), (6, 6, 16), -1)
-    cv2.putText(
-        annotated,
-        f"BOLLS: {estimated_total}",
-        (8, int(badge_h * 0.78)),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        max(0.4, min(h, w) * 0.00055),
-        (0, 220, 140),
-        max(1, thickness),
-        cv2.LINE_AA,
-    )
+    if draw_badge:
+        badge_h = max(28, int(min(h, w) * 0.045))
+        badge_w = max(200, int(min(h, w) * 0.28))
+        cv2.rectangle(annotated, (0, 0), (badge_w, badge_h), (6, 6, 16), -1)
+        cv2.putText(
+            annotated,
+            f"BOLLS: {estimated_total}",
+            (8, int(badge_h * 0.78)),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            max(0.4, min(h, w) * 0.00055),
+            box_color,
+            max(1, draw_thickness),
+            cv2.LINE_AA,
+        )
+    return annotated, estimated_total, visible_box_count, full_res_boxes
+
+
+def detect_cotton_bolls(img_rgb: np.ndarray, label: str) -> tuple[np.ndarray, int, int]:
+    annotated, estimated_total, visible_box_count, _ = detect_cotton_bolls_detailed(img_rgb, label)
     return annotated, estimated_total, visible_box_count
 
 
-def draw_confidence_overlay(
-    image_rgb: np.ndarray,
-    subset_name: str,
-    pred_label: str,
-    post_prob: float,
-    pre_prob: float,
-) -> np.ndarray:
-    annotated = image_rgb.copy()
-    h, w = annotated.shape[:2]
-
-    confidence = post_prob if pred_label == "Post_Defoliation" else pre_prob
-    conf_pct = confidence * 100.0
-
-    panel_w = max(260, int(w * 0.34))
-    panel_h = max(72, int(h * 0.11))
-    x0 = max(8, int(w * 0.015))
-    y0 = max(42, int(h * 0.02))
-    x1 = min(w - 8, x0 + panel_w)
-    y1 = min(h - 8, y0 + panel_h)
-
-    cv2.rectangle(annotated, (x0, y0), (x1, y1), (10, 12, 24), -1)
-    cv2.rectangle(annotated, (x0, y0), (x1, y1), (255, 255, 255), 1)
-
-    label_text = "POST" if pred_label == "Post_Defoliation" else "PRE"
-    accent = (0, 220, 140) if pred_label == "Post_Defoliation" else (255, 191, 0)
-    cv2.putText(
-        annotated,
-        f"{subset_name}  {label_text}  {conf_pct:.1f}%",
-        (x0 + 10, y0 + max(18, int(panel_h * 0.34))),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        max(0.45, min(h, w) * 0.00042),
-        accent,
-        2,
-        cv2.LINE_AA,
-    )
-
-    bar_x0 = x0 + 10
-    bar_y0 = y0 + max(30, int(panel_h * 0.52))
-    bar_x1 = x1 - 10
-    bar_y1 = y1 - 10
-    cv2.rectangle(annotated, (bar_x0, bar_y0), (bar_x1, bar_y1), (55, 60, 72), -1)
-    fill_x1 = bar_x0 + int((bar_x1 - bar_x0) * confidence)
-    cv2.rectangle(annotated, (bar_x0, bar_y0), (fill_x1, bar_y1), accent, -1)
-    cv2.rectangle(annotated, (bar_x0, bar_y0), (bar_x1, bar_y1), (230, 230, 230), 1)
-
-    # Add a thick border so confidence difference is immediately visible at a glance.
-    border_color = accent if confidence >= 0.95 else ((255, 170, 0) if confidence >= 0.85 else (255, 99, 71))
-    cv2.rectangle(annotated, (0, 0), (w - 1, h - 1), border_color, max(4, int(min(h, w) * 0.006)))
-    return annotated
-
-
 def predict_image(
-    df: pd.DataFrame,
+    df,
     subsets: dict[str, list[str]],
     image_path: Path,
 ) -> dict[str, object]:
@@ -303,7 +275,6 @@ def predict_image(
         pred_idx = int(np.argmax(probs))
         pred_label = "Post_Defoliation" if pred_idx == 1 else "Pre_Defoliation"
         annotated, count, visible_box_count = detect_cotton_bolls(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB), pred_label)
-        annotated = draw_confidence_overlay(annotated, key, pred_label, float(probs[1]), float(probs[0]))
 
         results[key] = {
             "features": feature_names,
@@ -343,7 +314,7 @@ def build_board(pre_result: dict[str, object], post_result: dict[str, object], o
             ax.set_title(
                 f"{row_title} | {col_name}\n"
                 f"Pred: {panel['pred_label'].replace('_', ' ')}\n"
-                f"Post={panel['post_prob']:.3f} | Pre={panel['pre_prob']:.3f} | Est.Bolls={panel['count']} | Boxes={panel['visible_box_count']}",
+                f"Post={panel['post_prob']:.3f} | Pre={panel['pre_prob']:.3f} | Est.Bolls={panel['count']}",
                 fontsize=9.5,
                 fontweight="bold",
             )
@@ -386,6 +357,8 @@ def save_summary_csv(pre_result: dict[str, object], post_result: dict[str, objec
 
 
 def main() -> None:
+    import pandas as pd
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
     parser.add_argument("--subsets-json", type=Path, default=DEFAULT_SUBSETS)

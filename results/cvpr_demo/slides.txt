@@ -26,4 +26,8 @@ file '/Volumes/T9/tech cotton 3d /repos/Quantum-Feature-Selection/results/cvpr_d
 duration 4.500
 file '/Volumes/T9/tech cotton 3d /repos/Quantum-Feature-Selection/results/cvpr_demo/frames/slide_14.png'
 duration 4.500
-file '/Volumes/T9/tech cotton 3d /repos/Quantum-Feature-Selection/results/cvpr_demo/frames/slide_14.png'
+file '/Volumes/T9/tech cotton 3d /repos/Quantum-Feature-Selection/results/cvpr_demo/frames/slide_15.png'
+duration 4.500
+file '/Volumes/T9/tech cotton 3d /repos/Quantum-Feature-Selection/results/cvpr_demo/frames/slide_16.png'
+duration 4.500
+file '/Volumes/T9/tech cotton 3d /repos/Quantum-Feature-Selection/results/cvpr_demo/frames/slide_16.png'
