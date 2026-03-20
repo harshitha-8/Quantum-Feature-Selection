@@ -350,7 +350,8 @@ def main() -> None:
     print("Copying k_comparison analysis plots...")
     plots_dir = ROOT / "results" / "plots" / "k_comparison"
     if plots_dir.exists():
-        for i, f in enumerate(sorted(plots_dir.glob("*.png")), start=9):
+        valid_plots = [f for f in sorted(plots_dir.glob("*.png")) if not f.name.startswith("._") and "honest_01" not in f.name]
+        for i, f in enumerate(valid_plots, start=9):
             base_name = f.name
             if "_" in base_name and base_name.split("_")[0].isdigit():
                 base_name = base_name.split("_", 1)[1]
