@@ -3,6 +3,12 @@
   "description": "The video begins with full pre- and post-defoliation UAV frames, then visualizes cotton-only response maps and refined detection overlays before moving to the ten quantitative comparison plots used in the analysis.",
   "slides": [
     {
+      "layout": "title",
+      "title": "Edge-AI: A Hybrid AI framework for Real-Time Vision at the Edge",
+      "caption": "CVPR-style demonstration storyboard",
+      "source_label": "Title slide"
+    },
+    {
       "title": "Pre-Defoliation UAV Image",
       "image": "results/cvpr_demo_assets/pre_normal.png",
       "caption": "Full pre-defoliation frame from the ICML UAV dataset. The green canopy is intact, and cotton bolls remain partially occluded by leaves and dense vegetation.",
