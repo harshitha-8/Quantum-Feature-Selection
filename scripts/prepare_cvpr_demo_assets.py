@@ -350,9 +350,13 @@ def main() -> None:
     print("Copying k_comparison analysis plots...")
     plots_dir = ROOT / "results" / "plots" / "k_comparison"
     if plots_dir.exists():
-        for f in sorted(plots_dir.glob("*.png")):
-            print(f"Copying {f.name}...")
-            shutil.copy(f, ASSET_DIR / f.name)
+        for i, f in enumerate(sorted(plots_dir.glob("*.png")), start=9):
+            base_name = f.name
+            if "_" in base_name and base_name.split("_")[0].isdigit():
+                base_name = base_name.split("_", 1)[1]
+            new_name = f"{i:02d}_{base_name}"
+            print(f"Copying {f.name} to {new_name}...")
+            shutil.copy(f, ASSET_DIR / new_name)
     else:
         print("Warning: Directory results/plots/k_comparison not found")
         
