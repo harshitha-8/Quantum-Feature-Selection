@@ -88,6 +88,8 @@ python3 scripts/prepare_cvpr_demo_assets.py
 python3 scripts/build_cvpr_demo.py
 ```
 
+The CVPR demo manifest can also include a title card as the first slide. The current configuration opens with `Edge-AI: A Hybrid AI framework for Real-Time Vision at the Edge` and renders that title slide with Tahoma at 24 pt for the exported video frames.
+
 Main repo files:
 
 - `cvpr_demo_manifest.json`

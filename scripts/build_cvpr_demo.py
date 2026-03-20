@@ -43,6 +43,7 @@ def load_manifest(path: Path) -> dict[str, Any]:
 
 def load_font(size: int, bold: bool = False) -> ImageFont.ImageFont:
     candidates = [
+        "/System/Library/Fonts/Supplemental/Tahoma Bold.ttf" if bold else "/System/Library/Fonts/Supplemental/Tahoma.ttf",
         "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
         "/System/Library/Fonts/Supplemental/Arial Bold.ttf" if bold else "/System/Library/Fonts/Supplemental/Arial.ttf",
         "/System/Library/Fonts/Helvetica.ttc",
@@ -89,7 +90,51 @@ def make_background(size: tuple[int, int]) -> Image.Image:
     return Image.new("RGB", size, BG_COLOR)
 
 
+def render_title_slide(slide: dict[str, Any], index: int, total: int, output_path: Path) -> None:
+    width, height = VIDEO_SIZE
+    background = make_background(VIDEO_SIZE)
+    draw = ImageDraw.Draw(background)
+
+    title_font = load_font(24, bold=False)
+    subtitle_font = load_font(18, bold=False)
+    meta_font = load_font(23)
+
+    title = slide["title"]
+    subtitle = slide.get("caption", "")
+    title_lines = wrap_text(draw, title, title_font, 620)
+    line_gap = 16
+    title_heights: list[int] = []
+    for line in title_lines:
+        bbox = draw.textbbox((0, 0), line, font=title_font)
+        title_heights.append(bbox[3] - bbox[1])
+    total_title_height = sum(title_heights) + max(0, len(title_heights) - 1) * line_gap
+    title_y = (height - total_title_height) / 2 - 36
+
+    current_y = title_y
+    for line, line_height in zip(title_lines, title_heights):
+        title_box = draw.textbbox((0, 0), line, font=title_font)
+        title_width = title_box[2] - title_box[0]
+        title_x = (width - title_width) / 2
+        draw.text((title_x, current_y), line, font=title_font, fill=TITLE_COLOR)
+        current_y += line_height + line_gap
+
+    if subtitle:
+        subtitle_box = draw.textbbox((0, 0), subtitle, font=subtitle_font)
+        subtitle_width = subtitle_box[2] - subtitle_box[0]
+        subtitle_x = (width - subtitle_width) / 2
+        subtitle_y = current_y + 16
+        draw.text((subtitle_x, subtitle_y), subtitle, font=subtitle_font, fill=TEXT_COLOR)
+
+    footer = f"Slide {index}/{total}   |   {slide.get('source_label', 'Project overview')}"
+    draw.text((CARD_MARGIN, height - CARD_MARGIN - 32), footer, font=meta_font, fill=ACCENT_COLOR)
+    background.save(output_path, quality=95)
+
+
 def render_slide(slide: dict[str, Any], index: int, total: int, output_path: Path) -> None:
+    if slide.get("layout") == "title":
+        render_title_slide(slide, index, total, output_path)
+        return
+
     width, height = VIDEO_SIZE
     background = make_background(VIDEO_SIZE)
     draw = ImageDraw.Draw(background)
@@ -133,15 +178,20 @@ def html_escape(value: str) -> str:
 def build_html(manifest: dict[str, Any], output_path: Path) -> None:
     slides_html = []
     for idx, slide in enumerate(manifest["slides"], start=1):
-        rel_image = Path(slide["image"]).relative_to("results")
+        image_html = ""
+        if "image" in slide:
+            rel_image = Path(slide["image"]).relative_to("results")
+            image_html = f"""
+              <div class="image-wrap">
+                <img src="../{html_escape(str(rel_image))}" alt="{html_escape(slide["title"])}">
+              </div>
+            """
         slides_html.append(
             f"""
             <section class="slide">
               <div class="meta">{idx} / {len(manifest["slides"])} · {html_escape(slide.get("source_label", "Project figure"))}</div>
               <h2>{html_escape(slide["title"])}</h2>
-              <div class="image-wrap">
-                <img src="../{html_escape(str(rel_image))}" alt="{html_escape(slide["title"])}">
-              </div>
+              {image_html}
               <p>{html_escape(slide["caption"])}</p>
             </section>
             """
@@ -192,17 +242,11 @@ def build_html(manifest: dict[str, Any], output_path: Path) -> None:
 def build_markdown(manifest: dict[str, Any], output_path: Path) -> None:
     lines = [f"# {manifest.get('title', 'CVPR Demo')}", "", manifest.get("description", ""), ""]
     for idx, slide in enumerate(manifest["slides"], start=1):
-        rel_image = Path(slide["image"]).relative_to("results")
-        lines.extend(
-            [
-                f"## Slide {idx}: {slide['title']}",
-                "",
-                f"![{slide['title']}](../{rel_image})",
-                "",
-                slide["caption"],
-                "",
-            ]
-        )
+        lines.extend([f"## Slide {idx}: {slide['title']}", ""])
+        if "image" in slide:
+            rel_image = Path(slide["image"]).relative_to("results")
+            lines.extend([f"![{slide['title']}](../{rel_image})", ""])
+        lines.extend([slide["caption"], ""])
     output_path.write_text("\n".join(lines))
 
 
