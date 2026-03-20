@@ -373,12 +373,11 @@ def plot6_radar():
     ax.set_xticklabels(metric_names, fontsize=12, fontweight="bold")
     ax.set_yticklabels([])
     ax.set_ylim(0, 1)
-    ax.set_title(f"Multi-Metric Radar Chart at σ={sigma}\n"
-                 "Compared feature subsets across five evaluation metrics",
-                 fontsize=13, fontweight="bold", pad=22)
+    ax.set_title(f"Multi-Metric Radar Chart at σ={sigma}",
+                 fontsize=14, fontweight="bold", pad=22)
     ax.legend(loc="upper right", bbox_to_anchor=(1.3, 1.15), fontsize=11)
     plt.tight_layout()
-    out = os.path.join(OUT_DIR, "repro_06_radar_honest.png")
+    out = os.path.join(OUT_DIR, "k_comparison", "07_radar_honest.png")
     plt.savefig(out, dpi=300, bbox_inches="tight"); plt.close()
     print(f"  Saved: {out}")
 
